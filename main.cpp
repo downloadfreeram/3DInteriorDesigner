@@ -10,7 +10,50 @@
 
 const unsigned int height = 800;
 const unsigned int width = 800;
+void dwa();
+void jed()
+{
+	ImGui::Begin("Test");
+	ImGui::Text("Test");
+	if (ImGui::Button("klik"))
+	{
+		ImGui::End();
+		dwa();
 
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
+	else
+	{
+		ImGui::End();
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
+
+}
+
+void dwa() 
+{
+	ImGui::Begin("Panocku!");
+	ImGui::Text("Panocku!");
+	if (ImGui::Button("odklik")) 
+	{
+		ImGui::End();
+		jed();
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
+	else
+	{
+		ImGui::End();
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
+
+}
 int main()
 {
 	glfwInit();
@@ -36,22 +79,15 @@ int main()
 	{
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		ImGui::Begin("Test");
-		ImGui::Text("Test");
-		ImGui::End();
-
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		jed();
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
