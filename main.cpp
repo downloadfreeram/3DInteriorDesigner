@@ -6,53 +6,62 @@
 #include<iostream>
 #include<GLFW/glfw3.h>
 
+#include"Model.h"
+#include"Shader.h"
+
+
+
 
 
 const unsigned int height = 800;
 const unsigned int width = 800;
+
+bool showTestWindow = true;
+bool showPanockuWindow = false;
+bool showTest2Window = false;
+
+void jed();
 void dwa();
+void trzy();
+
 void jed()
 {
-	ImGui::Begin("Test");
-	ImGui::Text("Test");
-	if (ImGui::Button("klik"))
+	ImGui::Begin("Test", &showTestWindow);
+	ImGui::Text("Lorem ipsum");
+	if (ImGui::Button("Next"))
 	{
-		ImGui::End();
-		dwa();
-
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		showTestWindow = false;
+		showPanockuWindow = true;
 	}
-	else
+	if (ImGui::Button("Next"))
 	{
-		ImGui::End();
-
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		showTestWindow = false;
+		showTest2Window = true;
 	}
-
+	ImGui::End();
 }
 
 void dwa() 
 {
-	ImGui::Begin("Panocku!");
-	ImGui::Text("Panocku!");
-	if (ImGui::Button("odklik")) 
+	ImGui::Begin("Test 2", &showPanockuWindow);
+	ImGui::Text("Lorem Ipsum");
+	if (ImGui::Button("Back"))
 	{
-		ImGui::End();
-		jed();
-
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		showPanockuWindow = false;
+		showTestWindow = true;
 	}
-	else
+	ImGui::End();
+}
+void trzy() 
+{
+	ImGui::Begin("Test 3", &showTest2Window);
+	ImGui::Text("Lorem Ipsum");
+	if (ImGui::Button("Back"))
 	{
-		ImGui::End();
-
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		showTest2Window = false;
+		showTestWindow = true;
 	}
-
+	ImGui::End();
 }
 int main()
 {
@@ -83,7 +92,21 @@ int main()
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		jed();
+		if (showTestWindow)
+		{
+			jed();
+		}
+		else if (showPanockuWindow)
+		{
+			dwa();
+		}
+		else if (showTest2Window)
+		{
+			trzy();
+		}
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
