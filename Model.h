@@ -1,9 +1,10 @@
 #ifndef MODEL_H
 #define MODEL_H
+#include <glad/glad.h> 
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <stb/stb_image.h>
+#include <stb\stb_image.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -118,28 +119,9 @@ private:
 		}
 		// checks all material textures of a given type and loads the textures if they're not loaded yet.
 		// the required info is returned as a Texture struct.
-		// process materials
-		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-
-		//diffuse maps
-		std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-		//specular maps
-		std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-		// normal maps
-		std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-		// height maps
-		std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
-		textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
-
-		// return a mesh object created from the extracted mesh data
-		return Mesh(vertices, indices, textures);
-	}
 		std::vector<Texture> loadMaterialTextures(aiMaterial * mat, aiTextureType type, std::string typeName)
 		{
-			std::vector<Texture> textures;
+			vector<Texture> textures;
 			for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
 			{
 				aiString str;
@@ -168,4 +150,8 @@ private:
 			return textures;
 		}
 	};
+
+	}
+
+};
 #endif

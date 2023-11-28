@@ -3,18 +3,22 @@
 #include"imgui_impl_opengl3.h"
 #include"imgui_impl_opengl3_loader.h"
 
-#include<GLFW/glfw3.h>
 #include<iostream>
+#include<GLFW/glfw3.h>
 
 #include"Model.h"
 #include"Shader.h"
+
+
+
+
 
 const unsigned int height = 800;
 const unsigned int width = 800;
 
 bool showTestWindow = true;
+bool showPanockuWindow = false;
 bool showTest2Window = false;
-bool showTest3Window = false;
 
 void jed();
 void dwa();
@@ -27,34 +31,34 @@ void jed()
 	if (ImGui::Button("Next"))
 	{
 		showTestWindow = false;
-		showTest2Window = true;
+		showPanockuWindow = true;
 	}
 	if (ImGui::Button("Next"))
 	{
 		showTestWindow = false;
-		showTest3Window = true;
+		showTest2Window = true;
 	}
 	ImGui::End();
 }
 
 void dwa() 
 {
-	ImGui::Begin("Test 2", &showTest2Window);
+	ImGui::Begin("Test 2", &showPanockuWindow);
 	ImGui::Text("Lorem Ipsum");
 	if (ImGui::Button("Back"))
 	{
-		showTest2Window = false;
+		showPanockuWindow = false;
 		showTestWindow = true;
 	}
 	ImGui::End();
 }
 void trzy() 
 {
-	ImGui::Begin("Test 3", &showTest3Window);
+	ImGui::Begin("Test 3", &showTest2Window);
 	ImGui::Text("Lorem Ipsum");
 	if (ImGui::Button("Back"))
 	{
-		showTest3Window = false;
+		showTest2Window = false;
 		showTestWindow = true;
 	}
 	ImGui::End();
@@ -92,11 +96,11 @@ int main()
 		{
 			jed();
 		}
-		else if (showTest2Window)
+		else if (showPanockuWindow)
 		{
 			dwa();
 		}
-		else if (showTest3Window)
+		else if (showTest2Window)
 		{
 			trzy();
 		}
