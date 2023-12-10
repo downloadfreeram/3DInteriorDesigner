@@ -133,6 +133,7 @@ int main()
 
     // load models
     Model ourModel("resources/objects/untitled.obj");
+    TextureFromFile("texture_diffuse1.jpg","resources/objects");
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -173,10 +174,10 @@ int main()
         glfwPollEvents();
     }
 
+    // delete all resources
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    // glfw: terminate, clearing all previously allocated GLFW resources.
     glfwTerminate();
     return 0;
 }
