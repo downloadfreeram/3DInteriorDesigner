@@ -34,10 +34,12 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+//menu logic
 bool showMainMenu = true;
 bool showSecondaryWindow = false;
 bool showModelWindow = false;
 
+//transform variables
 glm::vec3 posXYZ = glm::vec3(0.0f, 0.0f, 0.0f);
 float rot = 0.0f;
 
@@ -96,7 +98,7 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader, Model& ourModel) {
     ourShader.setMat4("projection", projection);
     ourShader.setMat4("view", view);
 
-    // render the loaded model
+    // render the loaded model and set its transforms
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, posXYZ);
     model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
@@ -111,7 +113,6 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader, Model& ourModel) {
 
 int main()
 {
-    // glfw: initialize and configure
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -133,7 +134,6 @@ int main()
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    // tell GLFW to capture our mouse
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -161,10 +161,8 @@ int main()
     ImGui_ImplOpenGL3_Init("#version 330");
 
 
-    // render loop
     while (!glfwWindowShouldClose(window))
     {
-        // render
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -190,7 +188,6 @@ int main()
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
