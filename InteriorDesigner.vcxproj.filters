@@ -51,6 +51,9 @@
     <ClCompile Include="stb.cpp">
       <Filter>Pliki źródłowe</Filter>
     </ClCompile>
+    <ClCompile Include="glad.c">
+      <Filter>Pliki źródłowe</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Libraries\include\glad\glad.h">
@@ -953,6 +956,9 @@
     <ClInclude Include="Model.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Libraries\include\glm\detail\func_common.inl">
@@ -1363,5 +1369,8 @@
     <None Include="Libraries\include\glm\gtx\wrap.inl">
       <Filter>Pliki nagłówkowe</Filter>
     </None>
+    <None Include="assimp-vc143-mtd.dll" />
+    <None Include="default.vert" />
+    <None Include="default.frag" />
   </ItemGroup>
 </Project>
