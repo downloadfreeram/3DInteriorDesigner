@@ -1376,4 +1376,8 @@
     <None Include="default.vert" />
     <None Include="default.frag" />
   </ItemGroup>
+  <ItemGroup>
+    <Library Include="Libraries\lib\assimp-vc143-mtd.lib" />
+    <Library Include="Libraries\lib\glfw3.lib" />
+  </ItemGroup>
 </Project>

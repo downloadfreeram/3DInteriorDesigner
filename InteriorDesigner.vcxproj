@@ -608,6 +608,10 @@
     <None Include="Libraries\include\glm\gtx\vector_query.inl" />
     <None Include="Libraries\include\glm\gtx\wrap.inl" />
   </ItemGroup>
+  <ItemGroup>
+    <Library Include="Libraries\lib\assimp-vc143-mtd.lib" />
+    <Library Include="Libraries\lib\glfw3.lib" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

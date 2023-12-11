@@ -106,7 +106,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Interior Designer", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -132,8 +132,8 @@ int main()
     Shader ourShader("default.vert", "default.frag");
 
     // load models
-    Model ourModel("resources/objects/untitled.obj");
-    TextureFromFile("texture_diffuse1.jpg","resources/objects");
+    Model ourModel("resources/objects/nightstand.obj");
+    TextureFromFile("texture_diffuse1.png","resources/objects");
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
