@@ -87,10 +87,21 @@ public:
         // set everything back to defaults once configured.
         glActiveTexture(GL_TEXTURE0);
     }
+    // set the deleted state of the mesh
+    void SetDeleted(bool deletedState) {
+        deleted = deletedState;
+    }
+
+    // check if the mesh is deleted
+    bool IsDeleted() const {
+        return deleted;
+    }
 
 private:
     // render data 
     unsigned int VBO, EBO;
+
+    bool deleted = false; //flag to indicate if the mesh is deleted or not
 
     // initializes all the buffer objects/arrays
     void setupMesh()

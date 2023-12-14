@@ -45,6 +45,15 @@ public:
             meshes[i].Draw(shader);
     }
 
+   // mark an object for deletion
+    void Delete(unsigned int index) {
+        //validity checks before deleting
+        if (index >= 0 && index < meshes.size()) {
+            // mark the mesh at the specified index as deleted
+            meshes[index].SetDeleted(true);
+        }
+    }
+
 private:
     // loads a model and stores the resulting meshes in the meshes vector.
     void loadModel(string const& path)
