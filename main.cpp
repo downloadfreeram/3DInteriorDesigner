@@ -79,10 +79,6 @@ void GenerateObject(std::string name, const char* texName,Shader& ourShader) {
     ourModel.Draw(ourShader);
     unsigned int id = 0;
 }
-void DeleteObject(std::string name)
-{
-
-}
 void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     ImGui::Begin("Viewport", &showModelWindow);
     ImGui::SliderFloat3("Position", glm::value_ptr(posXYZ), 0.0f, 10.0f);
