@@ -29,17 +29,14 @@ bool showSecondaryWindow = false;
 bool showModelWindow = false;
 
 
-std::vector<Model> models;  //Vector of objects
-std::vector<std::string> modelNames;    //Vector of objects names
+std::vector<Model> models;  //vector of objects
+std::vector<std::string> modelNames;    //vector of objects names
     
-int selectedId = -1; // Index of the selected model
+int selectedId = -1; // id of the selected model
 
 //transform variables
 glm::vec3 posXYZ = glm::vec3(0.0f, 0.0f, 0.0f);
 float rot = 0.0f;
-
-// Flag to indicate if the model should be generated/rendered
-bool generateModel = false; 
 
 std::string object;
 void DisplaySecondaryWindow() {
@@ -76,6 +73,7 @@ void SecondaryWindow() {
 
     ImGui::End();
 }
+// function to handle the names of generated objects in the dropdown menu
 std::string GenerateUniqueName(const std::string& defaultName) {
     int cnt = 0;
     std::string newName = defaultName;
@@ -85,22 +83,24 @@ std::string GenerateUniqueName(const std::string& defaultName) {
     }
     return newName;
 }
+// function to generate and render an object
 void GenerateObject(std::string name, const char* texName, Shader& ourShader, int id, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale,std::string menuName) {
-    // Load the model
+    // load the model
     Model ourModel(string("resources/objects/") + name, id, position, rotation, scale);
     models.push_back(ourModel);
 
-    std::string uniqueName = GenerateUniqueName(menuName); // Replace "ModelBaseName" with actual base name
+    std::string uniqueName = GenerateUniqueName(menuName); 
     modelNames.push_back(uniqueName);
     
 
-    // Load texture
+    // load texture
     TextureFromFile(texName, "resources/objects");
 
-    // Draw the model
+    // draw the model
     ourModel.Draw(ourShader);
 }
 
+// function to delete a specific object
 void DeleteObject(std::string name,int id) {
     models.erase(models.begin()+id);
     modelNames.erase(modelNames.begin() + id);
@@ -108,6 +108,7 @@ void DeleteObject(std::string name,int id) {
 
 void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     ImGui::Begin("Viewport", &showModelWindow);
+    // dropdown menu for every object
     if (ImGui::BeginCombo("Select Model", selectedId >= 0 ? modelNames[selectedId].c_str() : "None")) {
         for (int i = 0; i < modelNames.size(); i++) {
             bool isSelected = (selectedId == i);
@@ -121,12 +122,13 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
         ImGui::EndCombo();
     }
 
+    // options for every object generated
     if (selectedId >= 0 && selectedId < models.size()) {
         ImGui::SliderFloat3("Position", glm::value_ptr(models[selectedId].position), -10.0f, 10.0f);
         ImGui::SliderFloat3("Rotation", glm::value_ptr(models[selectedId].rotation), 0.0f, 360.0f);
         if (ImGui::Button("Delete")) {
             DeleteObject(modelNames[selectedId], selectedId);
-            // After deleting an object update the id
+            // after deleting an object update the id, and check if the vector is empty
             if (models.empty()) {
                 selectedId = -1; 
             }
@@ -140,6 +142,7 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     ourShader.use();
     ourShader.setMat4("camMatrix", camera.cameraMatrix);
 
+    // after clicking the R button show the list of objects to generate
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) 
     {
         ImGui::OpenPopup("Generate");
@@ -161,9 +164,8 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
 
     //loop to iterate each model in vector
     for (Model& model : models) {
-        // Set model-specific transformations (position, rotation, scale)
+        // set transformations for specific object
         glm::mat4 modelMatrix = model.GetTransformMatrix();
-        // You can use a model-specific shader or a general one, depending on your design
         ourShader.setMat4("model", modelMatrix);
         model.Draw(ourShader);
     }
@@ -171,7 +173,7 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     // ImGui input handling
     bool ImGuiHandlingInput = ImGui::GetIO().WantCaptureMouse;
 
-    // Process camera inputs only if ImGui is not handling input
+    // process camera inputs only if ImGui is not handling input
     if (!ImGuiHandlingInput) {
         camera.updateMatrix(camera.zoom, 0.1f, 100.0f);
         camera.Inputs(window);
