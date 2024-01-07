@@ -28,6 +28,12 @@ bool showMainMenu = true;
 bool showSecondaryWindow = false;
 bool showModelWindow = false;
 
+
+std::vector<Model> models;  //Vector of objects
+std::vector<std::string> modelNames;    //Vector of objects names
+    
+int selectedId = -1; // Index of the selected model
+
 //transform variables
 glm::vec3 posXYZ = glm::vec3(0.0f, 0.0f, 0.0f);
 float rot = 0.0f;
@@ -36,7 +42,6 @@ float rot = 0.0f;
 bool generateModel = false; 
 
 std::string object;
-
 void DisplaySecondaryWindow() {
     showMainMenu = false;
     showSecondaryWindow = true;
@@ -71,23 +76,65 @@ void SecondaryWindow() {
 
     ImGui::End();
 }
-void GenerateObject(std::string name, const char* texName,Shader& ourShader) {
-    // load models
-    Model ourModel(string("resources/objects/")+name);
-    TextureFromFile(texName, "resources/objects");
-    // render the loaded model and set its transforms
-    ourModel.Draw(ourShader);
-    unsigned int id = 0;
+std::string GenerateUniqueName(const std::string& defaultName) {
+    int cnt = 0;
+    std::string newName = defaultName;
+    while (std::find(modelNames.begin(), modelNames.end(), newName) != modelNames.end()) {
+        newName = defaultName + std::to_string(cnt);
+        cnt++;
+    }
+    return newName;
 }
+void GenerateObject(std::string name, const char* texName, Shader& ourShader, int id, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale,std::string menuName) {
+    // Load the model
+    Model ourModel(string("resources/objects/") + name, id, position, rotation, scale);
+    models.push_back(ourModel);
+
+    std::string uniqueName = GenerateUniqueName(menuName); // Replace "ModelBaseName" with actual base name
+    modelNames.push_back(uniqueName);
+    
+
+    // Load texture
+    TextureFromFile(texName, "resources/objects");
+
+    // Draw the model
+    ourModel.Draw(ourShader);
+}
+
+void DeleteObject(std::string name,int id) {
+    models.erase(models.begin()+id);
+    modelNames.erase(modelNames.begin() + id);
+}
+
 void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     ImGui::Begin("Viewport", &showModelWindow);
-    ImGui::SliderFloat3("Position", glm::value_ptr(posXYZ), 0.0f, 10.0f);
-    ImGui::SliderFloat("Rotation", &rot, 0.0f, 360.0f);
+    if (ImGui::BeginCombo("Select Model", selectedId >= 0 ? modelNames[selectedId].c_str() : "None")) {
+        for (int i = 0; i < modelNames.size(); i++) {
+            bool isSelected = (selectedId == i);
+            if (ImGui::Selectable(modelNames[i].c_str(), isSelected)) {
+                selectedId = i;
+            }
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
 
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, posXYZ);
-    model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
-    model = glm::rotate(model, glm::radians(rot), glm::vec3(0.0f, 1.0f, 0.0f));
+    if (selectedId >= 0 && selectedId < models.size()) {
+        ImGui::SliderFloat3("Position", glm::value_ptr(models[selectedId].position), -10.0f, 10.0f);
+        ImGui::SliderFloat3("Rotation", glm::value_ptr(models[selectedId].rotation), 0.0f, 360.0f);
+        if (ImGui::Button("Delete")) {
+            DeleteObject(modelNames[selectedId], selectedId);
+            // After deleting an object update the id
+            if (models.empty()) {
+                selectedId = -1; 
+            }
+            else {
+                selectedId = std::min(selectedId, static_cast<int>(models.size()) - 1); 
+            }
+        }
+    }
 
     //enable shader 
     ourShader.use();
@@ -96,28 +143,29 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) 
     {
         ImGui::OpenPopup("Generate");
-    }
+    } 
 
     if (ImGui::BeginPopup("Generate")) 
     {
-        if (ImGui::Button("Generate stair")) 
-        {
-            generateModel = true; // Set the flag to indicate that the model should be generated
-            object = "untitled.obj";
-            ImGui::CloseCurrentPopup();
+        if (ImGui::Button("Generate Cube")) {
+            GenerateObject("untitled.obj", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Cube");
         }
-        if (ImGui::Button("Generate box"))
-        {
-            generateModel = true; // Set the flag to indicate that the model should be generated
-            object = "test.obj";
-            ImGui::CloseCurrentPopup();
+
+
+        if (ImGui::Button("Generate Chair")) {
+            GenerateObject("test.obj", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Chair");
         }
+
         ImGui::EndPopup();
     }
 
-    if (generateModel) {
-        ourShader.setMat4("model", model);
-        GenerateObject(object, "texture_diffuse1.jpg",ourShader);
+    //loop to iterate each model in vector
+    for (Model& model : models) {
+        // Set model-specific transformations (position, rotation, scale)
+        glm::mat4 modelMatrix = model.GetTransformMatrix();
+        // You can use a model-specific shader or a general one, depending on your design
+        ourShader.setMat4("model", modelMatrix);
+        model.Draw(ourShader);
     }
 
     // ImGui input handling

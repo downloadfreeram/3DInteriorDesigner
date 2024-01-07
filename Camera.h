@@ -23,7 +23,6 @@ class Camera
         int width;
         int height;
         float zoom = 45.0f;
-
         float speed = 2.5f;
         float sensitivity = 20.0f;
 

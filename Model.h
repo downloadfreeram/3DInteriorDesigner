@@ -31,11 +31,26 @@ public:
     vector<Mesh>    meshes;
     string directory;
     bool gammaCorrection;
+    int id;
+    glm::vec3 position;
+    glm::vec3 rotation;
+    glm::vec3 scale;
+
+
+    glm::mat4 GetTransformMatrix() const {
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, position);
+        trans = glm::rotate(trans, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+        trans = glm::rotate(trans, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+        trans = glm::rotate(trans, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+        trans = glm::scale(trans, scale);
+        return trans;
+    }
 
     // expects a filepath to a 3D model.
-    Model(string const& path, bool gamma = false) : gammaCorrection(gamma)
-    {
-        loadModel(path);
+    Model(const std::string& modelPath, int id, const glm::vec3& pos, const glm::vec3& rot, const glm::vec3& scl)
+        : id(id), position(pos), rotation(rot), scale(scl)  {
+        loadModel(modelPath);
     }
 
     // draws the model
@@ -43,15 +58,6 @@ public:
     {
         for (unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
-    }
-
-   // mark an object for deletion
-    void Delete(unsigned int index) {
-        //validity checks before deleting
-        if (index >= 0 && index < meshes.size()) {
-            // mark the mesh at the specified index as deleted
-            meshes[index].SetDeleted(true);
-        }
     }
 
 private:
