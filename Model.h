@@ -40,9 +40,7 @@ public:
     glm::mat4 GetTransformMatrix() const {
         glm::mat4 trans = glm::mat4(1.0f);
         trans = glm::translate(trans, position);
-        trans = glm::rotate(trans, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
         trans = glm::rotate(trans, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-        trans = glm::rotate(trans, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
         trans = glm::scale(trans, scale);
         return trans;
     }
@@ -86,11 +84,11 @@ private:
         for (unsigned int i = 0; i < node->mNumMeshes; i++)
         {
             // the node object only contains indices to index the actual objects in the scene. 
-            // the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
+            // the scene contains all the data, nodes keep stuff organised.
             aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
             meshes.push_back(processMesh(mesh, scene));
         }
-        // after processed all of the meshes (if any), then recursively process each of the children nodes
+        // after processed all of the meshes (if any), recursively process each of the children nodes
         for (unsigned int i = 0; i < node->mNumChildren; i++)
         {
             processNode(node->mChildren[i], scene);
@@ -158,9 +156,9 @@ private:
         }
         // process materials
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-        // Each diffuse texture should be named
+        // each diffuse texture should be named
         // as 'texture_diffuseN', N is a number ranging from 1 to MAX_SAMPLER_NUMBER. 
-        // Same logic applies to the following
+        // same logic applies to the following
         // diffuse: texture_diffuseN
         // specular: texture_specularN
         // normal: texture_normalN

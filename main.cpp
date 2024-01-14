@@ -124,8 +124,12 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
 
     // options for every object generated
     if (selectedId >= 0 && selectedId < models.size()) {
-        ImGui::SliderFloat3("Position", glm::value_ptr(models[selectedId].position), -10.0f, 10.0f);
-        ImGui::SliderFloat3("Rotation", glm::value_ptr(models[selectedId].rotation), 0.0f, 360.0f);
+        ImGui::SliderFloat("X Position", &models[selectedId].position.x, -20.0f, 20.0f);
+        ImGui::SliderFloat("Y Position", &models[selectedId].position.y, 0.0f, 20.0f);
+        ImGui::SliderFloat("Z Position", &models[selectedId].position.z, -20.0f, 20.0f);
+
+
+        ImGui::SliderFloat("Rotation", &models[selectedId].rotation.y, 0.0f, 360.0f);
         if (ImGui::Button("Delete")) {
             DeleteObject(modelNames[selectedId], selectedId);
             // after deleting an object update the id, and check if the vector is empty
@@ -247,6 +251,7 @@ int main()
         if (showModelWindow) {
             RenderModelWindow(window, ourShader);
         }
+        
 
 
         ImGui::Render();
