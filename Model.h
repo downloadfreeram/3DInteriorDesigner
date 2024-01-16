@@ -36,6 +36,8 @@ public:
     glm::vec3 rotation;
     glm::vec3 scale;
 
+    Mesh mesh;
+    Shader shader;
 
     glm::mat4 GetTransformMatrix() const {
         glm::mat4 trans = glm::mat4(1.0f);
@@ -45,6 +47,12 @@ public:
         return trans;
     }
 
+    //default constructor
+    Model()
+        : position(glm::vec3(0.0f)),
+        rotation(glm::vec3(0.0f)),
+        scale(glm::vec3(1.0f)) {
+    }
     // expects a filepath to a 3D model.
     Model(const std::string& modelPath, int id, const glm::vec3& pos, const glm::vec3& rot, const glm::vec3& scl)
         : id(id), position(pos), rotation(rot), scale(scl)  {
@@ -56,6 +64,51 @@ public:
     {
         for (unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
+    }
+    // Getter for position
+    glm::vec3 getPosition() const {
+        return position;
+    }
+
+    // Getter for rotation
+    glm::vec3 getRotation() const {
+        return rotation;
+    }
+
+    // Getter for scale
+    glm::vec3 getScale() const {
+        return scale;
+    }
+    // Setter for position
+    void setPosition(const glm::vec3& newPosition) {
+        position = newPosition;
+    }
+
+    // Setter for rotation
+    void setRotation(const glm::vec3& newRotation) {
+        rotation = newRotation;
+    }
+
+    // Setter for scale
+    void setScale(const glm::vec3& newScale) {
+        scale = newScale;
+    }
+    nlohmann::json serialize() const {
+        nlohmann::json j;
+        j["position"] = { position.x, position.y, position.z };
+        j["rotation"] = { rotation.x, rotation.y, rotation.z };
+        j["scale"] = { scale.x, scale.y, scale.z };
+        j["mesh"] = mesh.serialize();
+        j["shader"] = shader.serialize();
+        return j;
+    }
+
+    void deserialize(const nlohmann::json& j) {
+        position = glm::vec3(j["position"][0], j["position"][1], j["position"][2]);
+        rotation = glm::vec3(j["rotation"][0], j["rotation"][1], j["rotation"][2]);
+        scale = glm::vec3(j["scale"][0], j["scale"][1], j["scale"][2]);
+        mesh.deserialize(j["mesh"]);  
+        shader.deserialize(j["shader"]);
     }
 
 private:

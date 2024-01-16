@@ -39,40 +39,6 @@ glm::vec3 posXYZ = glm::vec3(0.0f, 0.0f, 0.0f);
 float rot = 0.0f;
 
 std::string object;
-void DisplaySecondaryWindow() {
-    showMainMenu = false;
-    showSecondaryWindow = true;
-}
-
-void DisplayModelWindow() {
-    showMainMenu = false;
-    showModelWindow = true;
-}
-
-void MainMenu() {
-    ImGui::Begin("Main Menu", &showMainMenu);
-
-    if (ImGui::Button("About")) {
-        DisplaySecondaryWindow();
-    }
-
-    if (ImGui::Button("Start")) {
-        DisplayModelWindow();
-    }
-
-    ImGui::End();
-}
-
-void SecondaryWindow() {
-    ImGui::Begin("Secondary Window", &showSecondaryWindow);
-
-    if (ImGui::Button("Back to Main Menu")) {
-        showSecondaryWindow = false;
-        showMainMenu = true;
-    }
-
-    ImGui::End();
-}
 // function to handle the names of generated objects in the dropdown menu
 std::string GenerateUniqueName(const std::string& defaultName) {
     int cnt = 0;
@@ -106,6 +72,78 @@ void DeleteObject(std::string name,int id) {
     modelNames.erase(modelNames.begin() + id);
 }
 
+nlohmann::json serializeModel(const Model& model) {
+    nlohmann::json j;
+    j["position"] = { model.getPosition().x, model.getPosition().y, model.getPosition().z };
+    j["rotation"] = { model.getRotation().x, model.getRotation().y, model.getRotation().z };
+    j["scale"] = { model.getScale().x, model.getScale().y, model.getScale().z };
+    return j;
+}
+Model deserializeModel(const nlohmann::json& j) {
+    Model model;
+    // Set properties from JSON
+    model.setPosition(glm::vec3(j["position"][0], j["position"][1], j["position"][2]));
+    model.setRotation(glm::vec3(j["rotation"][0], j["rotation"][1], j["rotation"][2]));
+    model.setScale(glm::vec3(j["scale"][0], j["scale"][1], j["scale"][2]));
+    return model;
+}
+void saveScene(const std::vector<Model>& models, const std::string& filename) {
+    nlohmann::json scene;
+    for (const auto& model : models) {
+        scene["models"].push_back(serializeModel(model));
+    }
+    std::ofstream file(filename);
+    file << scene.dump(4);  // Save with indentation for readability
+}
+
+std::vector<Model> loadScene(const std::string& filename) {
+    std::ifstream file(filename);
+    nlohmann::json scene;
+    file >> scene;
+    std::vector<Model> models;
+    for (const auto& jModel : scene["models"]) {
+        models.push_back(deserializeModel(jModel));
+    }
+    return models;
+}
+
+void DisplaySecondaryWindow() {
+    showMainMenu = false;
+    showSecondaryWindow = true;
+}
+
+void DisplayModelWindow() {
+    showMainMenu = false;
+    showModelWindow = true;
+}
+
+void MainMenu() {
+    ImGui::Begin("Main Menu", &showMainMenu);
+
+    if (ImGui::Button("About")) {
+        DisplaySecondaryWindow();
+    }
+
+    if (ImGui::Button("Start")) {
+        DisplayModelWindow();
+    }
+    if (ImGui::Button("Load Scene")) {
+        models = loadScene("scene.json"); // Loads the scene from a file
+        DisplayModelWindow();
+    }
+    ImGui::End();
+}
+
+void SecondaryWindow() {
+    ImGui::Begin("Secondary Window", &showSecondaryWindow);
+
+    if (ImGui::Button("Back to Main Menu")) {
+        showSecondaryWindow = false;
+        showMainMenu = true;
+    }
+
+    ImGui::End();
+}
 void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     ImGui::Begin("Viewport", &showModelWindow);
     // dropdown menu for every object
@@ -181,6 +219,11 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     if (!ImGuiHandlingInput) {
         camera.updateMatrix(camera.zoom, 0.1f, 100.0f);
         camera.Inputs(window);
+    }
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    {
+        saveScene(models, "scene.json"); // Saves the current scene to a file
+        std::cout << "Scene has been successfully saved" << std::endl;
     }
 
     ImGui::End();

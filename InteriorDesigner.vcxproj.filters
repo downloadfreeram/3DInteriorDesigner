@@ -962,6 +962,9 @@
     <ClInclude Include="Camera.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="Libraries\include\nlohmann\json.hpp">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Libraries\include\glm\detail\func_common.inl">

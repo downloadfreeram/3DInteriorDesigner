@@ -462,6 +462,7 @@
     <ClInclude Include="Libraries\include\glm\vector_relational.hpp" />
     <ClInclude Include="Libraries\include\json\json.h" />
     <ClInclude Include="Libraries\include\KHR\khrplatform.h" />
+    <ClInclude Include="Libraries\include\nlohmann\json.hpp" />
     <ClInclude Include="Libraries\include\stb\stb_image.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />

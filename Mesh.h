@@ -40,6 +40,9 @@ public:
     vector<Texture>      textures;
     unsigned int VAO;
 
+    //default constructor
+    Mesh() : vertices(), indices(), textures() {}
+
     Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures)
     {
         this->vertices = vertices;
@@ -87,21 +90,39 @@ public:
         // set everything back to defaults once configured.
         glActiveTexture(GL_TEXTURE0);
     }
-    // set the deleted state of the mesh
-    void SetDeleted(bool deletedState) {
-        deleted = deletedState;
+
+    nlohmann::json serialize() const {
+        nlohmann::json j;
+        // Serialize vertex data
+        std::vector<nlohmann::json> verticesJson;
+        for (const Vertex& v : this->vertices) {
+            verticesJson.push_back({ {"position", {v.Position.x, v.Position.y, v.Position.z}},
+                                    {"normal", {v.Normal.x, v.Normal.y, v.Normal.z}},
+                                    {"texCoords", {v.TexCoords.x, v.TexCoords.y}} });
+        }
+        j["vertices"] = verticesJson;
+
+        return j;
     }
 
-    // check if the mesh is deleted
-    bool IsDeleted() const {
-        return deleted;
+
+    void deserialize(const nlohmann::json& j) {
+        // Deserialize vertex data
+        std::vector<Vertex> vertices;
+        for (const auto& vertexJson : j["vertices"]) {
+            Vertex v;
+            v.Position = glm::vec3(vertexJson["position"][0], vertexJson["position"][1], vertexJson["position"][2]);
+            v.Normal = glm::vec3(vertexJson["normal"][0], vertexJson["normal"][1], vertexJson["normal"][2]);
+            v.TexCoords = glm::vec2(vertexJson["texCoords"][0], vertexJson["texCoords"][1]);
+            vertices.push_back(v);
+        }
+        this->vertices = vertices;
     }
+
 
 private:
     // render data 
     unsigned int VBO, EBO;
-
-    bool deleted = false; //flag to indicate if the mesh is deleted or not
 
     // initializes all the buffer objects/arrays
     void setupMesh()
