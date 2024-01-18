@@ -5,6 +5,8 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <nlohmann/json.hpp>
 #include <stb/stb_image.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -93,22 +95,28 @@ public:
     void setScale(const glm::vec3& newScale) {
         scale = newScale;
     }
+
     nlohmann::json serialize() const {
         nlohmann::json j;
+        j["mesh"] = mesh.serialize();
+        j["shader"] = shader.serialize();
+
+        // Serialize position, rotation, and scale
         j["position"] = { position.x, position.y, position.z };
         j["rotation"] = { rotation.x, rotation.y, rotation.z };
         j["scale"] = { scale.x, scale.y, scale.z };
-        j["mesh"] = mesh.serialize();
-        j["shader"] = shader.serialize();
+
         return j;
     }
 
     void deserialize(const nlohmann::json& j) {
+        mesh.deserialize(j["mesh"]);
+        shader.deserialize(j["shader"]);
+
+        // Deserialize position, rotation, and scale
         position = glm::vec3(j["position"][0], j["position"][1], j["position"][2]);
         rotation = glm::vec3(j["rotation"][0], j["rotation"][1], j["rotation"][2]);
         scale = glm::vec3(j["scale"][0], j["scale"][1], j["scale"][2]);
-        mesh.deserialize(j["mesh"]);  
-        shader.deserialize(j["shader"]);
     }
 
 private:

@@ -90,7 +90,7 @@ Model deserializeModel(const nlohmann::json& j) {
 void saveScene(const std::vector<Model>& models, const std::string& filename) {
     nlohmann::json scene;
     for (const auto& model : models) {
-        scene["models"].push_back(serializeModel(model));
+        scene["models"].push_back(model.serialize());
     }
     std::ofstream file(filename);
     file << scene.dump(4);  // Save with indentation for readability
@@ -102,7 +102,9 @@ std::vector<Model> loadScene(const std::string& filename) {
     file >> scene;
     std::vector<Model> models;
     for (const auto& jModel : scene["models"]) {
-        models.push_back(deserializeModel(jModel));
+        Model model;
+        model.deserialize(jModel);
+        models.push_back(model);
     }
     return models;
 }
