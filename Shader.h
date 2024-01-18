@@ -62,16 +62,19 @@ public:
         const char* fShaderCode = fragmentCode.c_str();
         // 2. compile shaders
         unsigned int vertex, fragment;
-        // vertex shader
+
+        // compile vertex shader
         vertex = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertex, 1, &vShaderCode, NULL);
         glCompileShader(vertex);
         checkCompileErrors(vertex, "VERTEX");
-        // fragment Shader
+
+        // compile fragment Shader
         fragment = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragment, 1, &fShaderCode, NULL);
         glCompileShader(fragment);
         checkCompileErrors(fragment, "FRAGMENT");
+
         // shader Program
         ID = glCreateProgram();
         glAttachShader(ID, vertex);
@@ -202,23 +205,36 @@ public:
         j["uniforms"]["mat4Uniform"] = {
             {"name", "mat4Uniform"},
             { "type", "mat4" },
-            { "value", {mat4Value[0][0], mat4Value[0][1], mat4Value[1][0], mat4Value[1][1], mat4Value[1][2], mat4Value[2][1], mat4Value[2][0], mat4Value[0][2], mat4Value[2][2],mat4Value[3][0],mat4Value[3][1],mat4Value[3][2],mat4Value[0][3],mat4Value[1][3],mat4Value[2][3],mat4Value[3][3]} }
+            { "value", {mat4Value[0][0], mat4Value[1][0], mat4Value[2][0], mat4Value[3][0], 
+                        mat4Value[0][1], mat4Value[1][1], mat4Value[2][1], mat4Value[3][1], 
+                        mat4Value[0][2],mat4Value[1][2],mat4Value[2][2],mat4Value[3][2],
+                        mat4Value[0][3],mat4Value[1][3],mat4Value[2][3],mat4Value[3][3]} }
         };
         j["uniforms"]["mat3Uniform"] = {
             {"name", "mat3Uniform"},
             { "type", "mat3" }, 
-            { "value", {mat3Value[0][0], mat3Value[0][1], mat3Value[1][0], mat3Value[1][1], mat3Value[1][2], mat3Value[2][1], mat3Value[2][0], mat3Value[0][2], mat3Value[2][2]} }
+            { "value", {mat3Value[0][0], mat3Value[1][0], mat3Value[2][0],
+                        mat3Value[0][1], mat3Value[1][1], mat3Value[2][1], 
+                        mat3Value[0][2], mat3Value[1][2], mat3Value[2][2]} }
     };
         j["uniforms"]["mat2Uniform"] = { 
             {"name", "mat2Uniform"},
             {"type", "mat2" }, 
-            {"value", {mat2Value[0][0], mat2Value[0][1], mat2Value[1][0], mat2Value[1][1]}}
+            {"value", {mat2Value[0][0], mat2Value[1][0],
+                       mat2Value[0][1], mat2Value[1][1]}}
         };
         // Print the JSON before returning
         std::cout << "Serialized JSON:\n" << j.dump(4) << std::endl;
         return j;
     }
-
+    void recompileAndRelink() {
+        // Recompile vertex and fragment shaders and relink them into a program
+        std::string vertexCode;
+        std::string fragmentCode;
+        readShaderCode(vertexShaderPath, vertexCode);
+        readShaderCode(fragmentShaderPath, fragmentCode);
+        compileAndLinkShaders(vertexCode.c_str(), fragmentCode.c_str());
+    }
     void deserialize(const nlohmann::json& j) {
         // deserialize vertex and fragment shader files
         vertexShaderPath = j["vertexCode"];
@@ -282,8 +298,52 @@ public:
                 setMat4(uniformName, mat4);
             }
         }
+        recompileAndRelink();
     }
 private:
+    void readShaderCode(const std::string& path, std::string& shaderCode) {
+        std::ifstream shaderFile;
+        shaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        try {
+            shaderFile.open(path);
+            std::stringstream shaderStream;
+            shaderStream << shaderFile.rdbuf();
+            shaderFile.close();
+            shaderCode = shaderStream.str();
+        }
+        catch (std::ifstream::failure& e) {
+            std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
+            std::cout << path << std::endl;
+            std::cout << shaderCode << std::endl;
+        }
+    }
+
+    void compileAndLinkShaders(const char* vertexShaderCode, const char* fragmentShaderCode) {
+        unsigned int vertex, fragment;
+
+        // Compile vertex shader
+        vertex = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertex, 1, &vertexShaderCode, NULL);
+        glCompileShader(vertex);
+        checkCompileErrors(vertex, "VERTEX");
+
+        // Compile fragment shader
+        fragment = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragment, 1, &fragmentShaderCode, NULL);
+        glCompileShader(fragment);
+        checkCompileErrors(fragment, "FRAGMENT");
+
+        // Link shaders
+        ID = glCreateProgram();
+        glAttachShader(ID, vertex);
+        glAttachShader(ID, fragment);
+        glLinkProgram(ID);
+        checkCompileErrors(ID, "PROGRAM");
+
+        // Delete shaders
+        glDeleteShader(vertex);
+        glDeleteShader(fragment);
+    }
     // utility function for checking shader compilation/linking errors.
     void checkCompileErrors(GLuint shader, std::string type)
     {
