@@ -27,7 +27,6 @@ Camera camera(SCR_WIDTH, SCR_HEIGHT, 45.0f, glm::vec3(0.0f, 0.0f, 2.0f));
 bool showMainMenu = true;
 bool showSecondaryWindow = false;
 bool showModelWindow = false;
-bool generateRoom = false;
 
 
 std::vector<Model> models;  //vector of objects
@@ -141,7 +140,6 @@ void MainMenu() {
     }
 
     if (ImGui::Button("Start")) {
-        generateRoom = true;
         DisplayModelWindow();
     }
     if (ImGui::Button("Load Scene")) {
@@ -166,10 +164,11 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     ourShader.use();
     ourShader.setMat4("camMatrix", camera.cameraMatrix);
 
-    if (generateRoom) {
-        GenerateRoom("room.obj", "texture_diffuse1.jpg", ourShader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1));
-        generateRoom = false;
-    }
+    Model room;
+
+    GenerateRoom("room.obj", "texture_diffuse1.jpg", ourShader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1));
+    ourShader.setMat4("room", glm::mat4(0.0f));
+    room.Draw(ourShader);
 
     ImGui::Begin("Viewport", &showModelWindow);
 
