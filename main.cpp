@@ -53,6 +53,7 @@ std::string GenerateUniqueName(const std::string& defaultName) {
     }
     return newName;
 }
+
 // function to generate and render an object
 void GenerateObject(std::string name, const char* texName, Shader& ourShader, int id, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale,std::string menuName) {
     // load the model
@@ -168,72 +169,67 @@ GLuint LoadTexture(const char* filename) {
 
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, image);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
         glGenerateMipmap(GL_TEXTURE_2D);
 
         stbi_image_free(image);
     }
     else {
-        std::cerr << "Failed to load texture: " << filename << std::endl;
+        std::cerr << "Failed to load texture: " << filename << " | Reason: " << stbi_failure_reason() << std::endl;
     }
 
     return textureID;
 }
+
+//global variables of textures
+GLuint texture1, texture2, texture3, texture4;
+
+void LoadTextures() {
+    texture1 = LoadTexture("resources/images/image1.png");
+    texture2 = LoadTexture("resources/images/image2.png");
+    texture3 = LoadTexture("resources/images/image3.png");
+    texture4 = LoadTexture("resources/images/image4.png");
+}
+
 void ChooseWindow() {
     ImGui::Begin("Choose a room", &showChooseWindow);
     ImGui::Text("Choose the room preset");
-
-    // load images and get texture IDs
-    GLuint texture1 = LoadTexture("resources/images/image1.png");
-    GLuint texture2 = LoadTexture("resources/images/image1.png");
-    GLuint texture3 = LoadTexture("resources/images/image1.png");
-    GLuint texture4 = LoadTexture("resources/images/image1.png");
 
     // Number of buttons
     int numButtons = 4;
 
     ImGui::Columns(numButtons, nullptr, false);
+    ImTextureID imguiTextureIDs[] = {
+        reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture1)),
+        reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture2)),
+        reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture3)),
+        reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture4))
+    };
 
     for (int i = 0; i < numButtons; ++i) {
         ImGui::SetColumnWidth(i, 200.0f);
 
-        // use the loaded texture IDs as ImTextureID
-        ImTextureID textureID = (i == 0) ? (ImTextureID)texture1 : (ImTextureID)texture2;
-
-        if (ImGui::ImageButton(textureID, ImVec2(200, 200))) {
-            // Handle button click action for each button
-            std::cout << "Button " << i << " clicked." << std::endl; // Debugging statement
-            showChooseWindow = false;
-            showModelWindow = true;
-            if (i == 0) {
-                // handle button click for the first button
-                
+        for (int i = 0; i < 4; ++i) {
+            ImGui::SetColumnWidth(i, 200.0f);
+            if (ImGui::ImageButton(imguiTextureIDs[i], ImVec2(200, 200))) {
+                std::cout << "Button " << i << " clicked." << std::endl;
+                showChooseWindow = false;
+                showModelWindow = true;
             }
-            else if (i == 1) {
-                // handle button click for the second button
-                
+            ImGui::Text("Preset %d", i + 1);
+            if (i < numButtons - 1) {
+                ImGui::NextColumn();
             }
-            else if (i == 2) {
-                // handle button click for the third button
-                
-            }
-            else {
-                // Handle button click for the fourth button
-                
-            }
-        }
-
-        // Optional: Add a label below each button
-        ImGui::Text("Preset %d", i + 1);
-
-        if (i < numButtons - 1) {
-            ImGui::NextColumn();
         }
     }
 
     ImGui::Columns(1);
-
     ImGui::End();
-    return;
 }
 
 void initializeScene(Shader& ourShader,const char* texName) {
