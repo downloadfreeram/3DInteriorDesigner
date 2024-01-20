@@ -196,6 +196,9 @@ void LoadTextures() {
     texture4 = LoadTexture("resources/images/image4.png");
 }
 
+std::vector<std::string> roomModelNames = { "room1.obj", "room2.obj" };
+std::string selectedRoomModel;
+
 void ChooseWindow() {
     ImGui::Begin("Choose a room", &showChooseWindow);
     ImGui::Text("Choose the room preset");
@@ -213,18 +216,14 @@ void ChooseWindow() {
 
     for (int i = 0; i < numButtons; ++i) {
         ImGui::SetColumnWidth(i, 200.0f);
-
-        for (int i = 0; i < 4; ++i) {
-            ImGui::SetColumnWidth(i, 200.0f);
-            if (ImGui::ImageButton(imguiTextureIDs[i], ImVec2(200, 200))) {
-                std::cout << "Button " << i << " clicked." << std::endl;
-                showChooseWindow = false;
-                showModelWindow = true;
-            }
-            ImGui::Text("Preset %d", i + 1);
-            if (i < numButtons - 1) {
-                ImGui::NextColumn();
-            }
+        if (ImGui::ImageButton(imguiTextureIDs[i], ImVec2(200, 200))) {
+            showChooseWindow = false;
+            showModelWindow = true;
+            selectedRoomModel = roomModelNames[i];
+        }
+        ImGui::Text("Preset %d", i + 1);
+        if (i < numButtons - 1) {
+            ImGui::NextColumn();
         }
     }
 
@@ -232,8 +231,9 @@ void ChooseWindow() {
     ImGui::End();
 }
 
-void initializeScene(Shader& ourShader,const char* texName) {
-    room = Model("resources/objects/room.obj", glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+
+void initializeScene(Shader& ourShader,const char* texName,const std::string roomObj) {
+    room = Model("resources/objects/"+roomObj, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     TextureFromFile(texName, "resources/objects");
     ourShader.use();
 }
@@ -362,7 +362,6 @@ int main()
 
     // build and compile shaders
     Shader ourShader("default.vert", "default.frag");
-    initializeScene(ourShader,"texture_diffuse1.jpg");
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -397,6 +396,7 @@ int main()
 
         if (showModelWindow) {
             std::cout << "Rendering model window" << std::endl;
+            initializeScene(ourShader,"texture_diffuse1.jpg",selectedRoomModel);
             RenderModelWindow(window, ourShader);
         }
 
