@@ -201,25 +201,24 @@ void ChooseWindow() {
 
         if (ImGui::ImageButton(textureID, ImVec2(200, 200))) {
             // Handle button click action for each button
+            std::cout << "Button " << i << " clicked." << std::endl; // Debugging statement
+            showChooseWindow = false;
+            showModelWindow = true;
             if (i == 0) {
                 // handle button click for the first button
-                showChooseWindow = false;
-                showModelWindow = true;
+                
             }
             else if (i == 1) {
                 // handle button click for the second button
-                showChooseWindow = false;
-                showModelWindow = true;
+                
             }
             else if (i == 2) {
                 // handle button click for the third button
-                showChooseWindow = false;
-                showModelWindow = true;
+                
             }
             else {
                 // Handle button click for the fourth button
-                showChooseWindow = false;
-                showModelWindow = true;
+                
             }
         }
 
@@ -401,6 +400,7 @@ int main()
         }
 
         if (showModelWindow) {
+            std::cout << "Rendering model window" << std::endl;
             RenderModelWindow(window, ourShader);
         }
 
