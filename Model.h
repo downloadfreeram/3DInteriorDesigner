@@ -55,9 +55,15 @@ public:
         rotation(glm::vec3(0.0f)),
         scale(glm::vec3(1.0f)) {
     }
-    // expects a filepath to a 3D model.
+    // constructor for object
     Model(const std::string& modelPath, int id, const glm::vec3& pos, const glm::vec3& rot, const glm::vec3& scl)
         : id(id), position(pos), rotation(rot), scale(scl)  {
+        loadModel(modelPath);
+    }
+
+    // costructor for scenario
+    Model(const std::string& modelPath, const glm::vec3& pos, const glm::vec3& rot, const glm::vec3& scl)
+        : position(pos), rotation(rot), scale(scl) {
         loadModel(modelPath);
     }
 

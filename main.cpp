@@ -17,8 +17,8 @@
 
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1600;
+const unsigned int SCR_HEIGHT = 1200;
 
 // camera
 Camera camera(SCR_WIDTH, SCR_HEIGHT, 45.0f, glm::vec3(0.0f, 0.0f, 2.0f));
@@ -65,6 +65,19 @@ void GenerateObject(std::string name, const char* texName, Shader& ourShader, in
     // draw the model
     ourModel.Draw(ourShader);
 }
+// function to generate and render a scenario
+void GenerateRoom(std::string name, const char* texName, Shader& ourShader, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
+    // load the model
+    Model ourModel(string("resources/objects/") + name, position, rotation, scale);
+
+    // load texture
+    TextureFromFile(texName, "resources/objects");
+
+    // draw the model
+    ourModel.Draw(ourShader);
+
+}
+
 
 // function to delete a specific object
 void DeleteObject(std::string name,int id) {
@@ -147,7 +160,14 @@ void SecondaryWindow() {
     ImGui::End();
 }
 void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
+    //enable shader 
+    ourShader.use();
+    ourShader.setMat4("camMatrix", camera.cameraMatrix);
+
     ImGui::Begin("Viewport", &showModelWindow);
+    
+
+
     // dropdown menu for every object
     if (ImGui::BeginCombo("Select Model", selectedId >= 0 ? modelNames[selectedId].c_str() : "None")) {
         for (int i = 0; i < modelNames.size(); i++) {
@@ -182,9 +202,6 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
         }
     }
 
-    //enable shader 
-    ourShader.use();
-    ourShader.setMat4("camMatrix", camera.cameraMatrix);
 
     // after clicking the R button show the list of objects to generate
     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) 
@@ -266,6 +283,7 @@ int main()
     // build and compile shaders
     Shader ourShader("default.vert", "default.frag");
 
+    GenerateRoom("room.obj", "texture_diffuse1.jpg", ourShader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1));
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -283,8 +301,6 @@ int main()
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
-
         if (showMainMenu) {
             MainMenu();
         }
@@ -297,7 +313,6 @@ int main()
             RenderModelWindow(window, ourShader);
         }
         
-
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
