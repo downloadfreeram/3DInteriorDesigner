@@ -27,6 +27,7 @@ Camera camera(SCR_WIDTH, SCR_HEIGHT, 45.0f, glm::vec3(0.0f, 0.0f, 2.0f));
 bool showMainMenu = true;
 bool showSecondaryWindow = false;
 bool showModelWindow = false;
+bool generateRoom = false;
 
 
 std::vector<Model> models;  //vector of objects
@@ -140,6 +141,7 @@ void MainMenu() {
     }
 
     if (ImGui::Button("Start")) {
+        generateRoom = true;
         DisplayModelWindow();
     }
     if (ImGui::Button("Load Scene")) {
@@ -164,9 +166,12 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     ourShader.use();
     ourShader.setMat4("camMatrix", camera.cameraMatrix);
 
-    ImGui::Begin("Viewport", &showModelWindow);
-    
+    if (generateRoom) {
+        GenerateRoom("room.obj", "texture_diffuse1.jpg", ourShader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1));
+        generateRoom = false;
+    }
 
+    ImGui::Begin("Viewport", &showModelWindow);
 
     // dropdown menu for every object
     if (ImGui::BeginCombo("Select Model", selectedId >= 0 ? modelNames[selectedId].c_str() : "None")) {
@@ -282,8 +287,6 @@ int main()
 
     // build and compile shaders
     Shader ourShader("default.vert", "default.frag");
-
-    GenerateRoom("room.obj", "texture_diffuse1.jpg", ourShader, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1));
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
