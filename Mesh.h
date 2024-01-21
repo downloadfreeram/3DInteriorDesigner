@@ -91,69 +91,6 @@ public:
         glActiveTexture(GL_TEXTURE0);
     }
 
-    nlohmann::json serialize() const {
-        nlohmann::json j;
-        // Serialize vertex data
-        std::vector<nlohmann::json> verticesJson;
-        for (const Vertex& v : this->vertices) {
-            verticesJson.push_back({ {"position", {v.Position.x, v.Position.y, v.Position.z}},
-                                    {"normal", {v.Normal.x, v.Normal.y, v.Normal.z}},
-                                    {"texCoords", {v.TexCoords.x, v.TexCoords.y}},
-                                    { "tangent", {v.Tangent.x,v.Tangent.y,v.Tangent.z}},
-                                    { "bitangent",{{v.Bitangent.x,v.Bitangent.y,v.Bitangent.z}}} });
-        }
-        j["vertices"] = verticesJson;
-
-        //serialize indices
-        j["indices"] = this->indices;
-
-        //serialize textures
-        std::vector<nlohmann::json> texturesJson;
-        for (const Texture& t : this->textures) {
-            texturesJson.push_back({ {"id",t.id},
-                {"type",t.type},
-                {"path",t.path} });
-        }
-        j["textures"] = texturesJson;
-        return j;
-    }
-
-
-    void deserialize(const nlohmann::json& j) {
-        // Deserialize vertex data
-        std::vector<Vertex> vertices;
-        for (const auto& vertexJson : j["vertices"]) {
-            Vertex v;
-            v.Position = glm::vec3(vertexJson["position"][0], vertexJson["position"][1], vertexJson["position"][2]);
-            v.Normal = glm::vec3(vertexJson["normal"][0], vertexJson["normal"][1], vertexJson["normal"][2]);
-            v.TexCoords = glm::vec2(vertexJson["texCoords"][0], vertexJson["texCoords"][1]);
-            v.Tangent = glm::vec3(vertexJson["tangent"][0], vertexJson["tangent"][1], vertexJson["tangent"][2]);
-            v.Bitangent = glm::vec3(vertexJson["bitangent"][0], vertexJson["bitangent"][1], vertexJson["bitangent"][2]);
-            vertices.push_back(v);
-        }
-        this->vertices = vertices;
-
-        //deserialize indices
-        if (j.contains("indices") && j["indices"].is_array()) {
-            this->indices = j["indices"].get<std::vector<unsigned int>>();
-        }
-
-        //deserialize textures
-        if (j.contains("textures") && j["textures"].is_array()) {
-            std::vector<Texture> textures;
-            for (const auto& textureJson : j["textures"]) {
-                Texture t;
-                t.id = textureJson.value("id", 0);
-                t.type = textureJson.value("type", "");
-                t.path = textureJson.value("path", "");
-                textures.push_back(t);
-            }
-            this->textures = textures;
-        }
-        setupMesh();
-    }
-
-
 private:
     // render data 
     unsigned int VBO, EBO;

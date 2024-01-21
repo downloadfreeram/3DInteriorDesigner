@@ -12,6 +12,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "Shader.h"
+#include "Snapshot.h"
 
 #include <iostream>
 #include <chrono>
@@ -26,9 +27,6 @@ Camera camera(SCR_WIDTH, SCR_HEIGHT, 45.0f, glm::vec3(0.0f, 0.0f, 2.0f));
 
 // room
 Model room;
-
-// shader
-Shader ourShader;
 
 //menu logic
 bool showMainMenu = true;
@@ -80,10 +78,8 @@ void DeleteObject(std::string name,int id) {
     models.erase(models.begin()+id);
     modelNames.erase(modelNames.begin() + id);
 }
-
-// forward declaration
-void initializeScene(Shader& ourShader, const char* texName, const std::string roomObj);
-std::vector<Model> loadScene(const std::string& filename);
+void saveGameState(const std::string& filename, const std::vector<Model>& models);
+void loadGameState(const std::string& filename, std::vector<Model>& models);
 
 void DisplaySecondaryWindow() {
     showMainMenu = false;
@@ -113,15 +109,8 @@ void MainMenu() {
         DisplayChooseWindow();
     }
     if (ImGui::Button("Load Scene")) {
-        //models = loadScene("scene.json"); // Loads the scene from a file
-        std::vector<Model> loadedModels = loadScene("scene.json");
-        initializeScene(ourShader, "texture_diffuse1.jpg","room1.obj");
-        if (!loadedModels.empty()) {
-            DisplayModelWindow();
-        }
-        else {
-            std::cout << "Failed to load the scene! " << std::endl;
-        }
+        loadGameState("file.bin", models);
+        DisplayModelWindow();
     }
     ImGui::End();
 }
@@ -225,59 +214,6 @@ void initializeScene(Shader& ourShader,const char* texName,const std::string roo
     ourShader.use();
 }
 
-nlohmann::json serializeModel(Model& model) {
-    nlohmann::json j;
-    j["position"] = { model.getPosition().x, model.getPosition().y, model.getPosition().z };
-    j["rotation"] = { model.getRotation().x, model.getRotation().y, model.getRotation().z };
-    j["scale"] = { model.getScale().x, model.getScale().y, model.getScale().z };
-
-    Shader& modelShader = model.getShader();
-    nlohmann::json serializedShader = modelShader.serialize();
-    j["shader"] = serializedShader;
-    return j;
-}
-Model deserializeModel(const nlohmann::json& j) {
-    Model model;
-    // Set properties from JSON
-    model.setPosition(glm::vec3(j["position"][0], j["position"][1], j["position"][2]));
-    model.setRotation(glm::vec3(j["rotation"][0], j["rotation"][1], j["rotation"][2]));
-    model.setScale(glm::vec3(j["scale"][0], j["scale"][1], j["scale"][2]));
-    return model;
-}
-void saveScene(std::vector<Model>& models, const std::string& filename) {
-    nlohmann::json scene;
-    for (auto& model : models) {
-        nlohmann::json serializedModel = serializeModel(model);
-        Shader& modelShader = model.getShader();
-        nlohmann::json serializedShader = modelShader.serialize();
-        serializedModel["shader"] = serializedShader;
-        
-        scene["models"].push_back(serializedModel);
-    }
-    std::ofstream file(filename);
-    if (file.is_open()) {
-        file << scene.dump(4); // serialize with indendation for readability
-        file.close();
-        std::cout << "Scene saved to " << filename << std::endl;
-    }
-    else {
-        std::cerr << "Unable to open file for writing: " << filename << std::endl;
-    }
-}
-
-std::vector<Model> loadScene(const std::string& filename) {
-    std::ifstream file(filename);
-    nlohmann::json scene;
-    file >> scene;
-    std::vector<Model> models;
-    for (const auto& jModel : scene["models"]) {
-        Model model;
-        model.deserialize(jModel);
-        models.push_back(model);
-    }
-    return models;
-}
-
 void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     //enable shader 
     ourShader.use();
@@ -331,13 +267,13 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
 
     if (ImGui::BeginPopup("Generate")) 
     {
-        if (ImGui::Button("Standard Chair")) {
-            GenerateObject("chair_normal.obj", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Standard Chair");
+        if (ImGui::Button("Generate Cube")) {
+            GenerateObject("untitled.obj", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Cube");
         }
 
 
-        if (ImGui::Button("Dresser")) {
-            GenerateObject("dresser.obj", "texture_diffuse3.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.5),"Dresser");
+        if (ImGui::Button("Generate Chair")) {
+            GenerateObject("test.obj", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Chair");
         }
 
         ImGui::EndPopup();
@@ -361,11 +297,42 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     }
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
     {
-        saveScene(models, "scene.json"); // Saves the current scene to a file
+        saveGameState("file.bin", models);
+        std::cout << "Scene has been successfully saved" << std::endl;
     }
 
     ImGui::End();
 }
+void saveGameState(const std::string& filename, const std::vector<Model>& models) {
+    std::ofstream outFile(filename, std::ios::binary);
+    if (!outFile) {
+        throw std::runtime_error("Failed to open file for saving");
+    }
+
+    for (const auto& model : models) {
+        ModelSnapshot snapshot(model);
+        snapshot.serialize(outFile);
+    }
+}
+
+void loadGameState(const std::string& filename, std::vector<Model>& models) {
+    std::ifstream inFile(filename, std::ios::binary);
+    if (!inFile) {
+        throw std::runtime_error("Failed to open file for loading");
+    }
+
+    models.clear();
+    while (inFile.peek() != EOF) {
+        ModelSnapshot snapshot;
+        snapshot.deserialize(inFile);
+
+        Model model;
+        snapshot.applyToModel(model);
+        models.push_back(model);
+    }
+}
+
+
 int main()
 {
     glfwInit();
@@ -401,7 +368,6 @@ int main()
 
     // build and compile shaders
     Shader ourShader("default.vert", "default.frag");
-    std::cout << ourShader.vertexShaderPath << "   "<<ourShader.fragmentShaderPath << std::endl;
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -435,7 +401,7 @@ int main()
         }
 
         if (showModelWindow) {
-            initializeScene(ourShader,"texture_diffuse2.jpg",selectedRoomModel);
+            initializeScene(ourShader,"texture_diffuse1.jpg",selectedRoomModel);
             RenderModelWindow(window, ourShader);
         }
 
