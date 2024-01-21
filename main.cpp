@@ -27,6 +27,9 @@ Camera camera(SCR_WIDTH, SCR_HEIGHT, 45.0f, glm::vec3(0.0f, 0.0f, 2.0f));
 // room
 Model room;
 
+// shader
+Shader ourShader;
+
 //menu logic
 bool showMainMenu = true;
 bool showSecondaryWindow = false;
@@ -78,42 +81,9 @@ void DeleteObject(std::string name,int id) {
     modelNames.erase(modelNames.begin() + id);
 }
 
-nlohmann::json serializeModel(const Model& model) {
-    nlohmann::json j;
-    j["position"] = { model.getPosition().x, model.getPosition().y, model.getPosition().z };
-    j["rotation"] = { model.getRotation().x, model.getRotation().y, model.getRotation().z };
-    j["scale"] = { model.getScale().x, model.getScale().y, model.getScale().z };
-    return j;
-}
-Model deserializeModel(const nlohmann::json& j) {
-    Model model;
-    // Set properties from JSON
-    model.setPosition(glm::vec3(j["position"][0], j["position"][1], j["position"][2]));
-    model.setRotation(glm::vec3(j["rotation"][0], j["rotation"][1], j["rotation"][2]));
-    model.setScale(glm::vec3(j["scale"][0], j["scale"][1], j["scale"][2]));
-    return model;
-}
-void saveScene(const std::vector<Model>& models, const std::string& filename) {
-    nlohmann::json scene;
-    for (const auto& model : models) {
-        scene["models"].push_back(model.serialize());
-    }
-    std::ofstream file(filename);
-    file << scene.dump(4);  // Save with indentation for readability
-}
-
-std::vector<Model> loadScene(const std::string& filename) {
-    std::ifstream file(filename);
-    nlohmann::json scene;
-    file >> scene;
-    std::vector<Model> models;
-    for (const auto& jModel : scene["models"]) {
-        Model model;
-        model.deserialize(jModel);
-        models.push_back(model);
-    }
-    return models;
-}
+// forward declaration
+void initializeScene(Shader& ourShader, const char* texName, const std::string roomObj);
+std::vector<Model> loadScene(const std::string& filename);
 
 void DisplaySecondaryWindow() {
     showMainMenu = false;
@@ -144,7 +114,14 @@ void MainMenu() {
     }
     if (ImGui::Button("Load Scene")) {
         //models = loadScene("scene.json"); // Loads the scene from a file
-        DisplayModelWindow();
+        std::vector<Model> loadedModels = loadScene("scene.json");
+        initializeScene(ourShader, "texture_diffuse1.jpg","room1.obj");
+        if (!loadedModels.empty()) {
+            DisplayModelWindow();
+        }
+        else {
+            std::cout << "Failed to load the scene! " << std::endl;
+        }
     }
     ImGui::End();
 }
@@ -246,6 +223,43 @@ void initializeScene(Shader& ourShader,const char* texName,const std::string roo
     room = Model("resources/objects/"+roomObj, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
     TextureFromFile(texName, "resources/objects");
     ourShader.use();
+}
+
+nlohmann::json serializeModel(const Model& model) {
+    nlohmann::json j;
+    j["position"] = { model.getPosition().x, model.getPosition().y, model.getPosition().z };
+    j["rotation"] = { model.getRotation().x, model.getRotation().y, model.getRotation().z };
+    j["scale"] = { model.getScale().x, model.getScale().y, model.getScale().z };
+    return j;
+}
+Model deserializeModel(const nlohmann::json& j) {
+    Model model;
+    // Set properties from JSON
+    model.setPosition(glm::vec3(j["position"][0], j["position"][1], j["position"][2]));
+    model.setRotation(glm::vec3(j["rotation"][0], j["rotation"][1], j["rotation"][2]));
+    model.setScale(glm::vec3(j["scale"][0], j["scale"][1], j["scale"][2]));
+    return model;
+}
+void saveScene(const std::vector<Model>& models, const std::string& filename) {
+    nlohmann::json scene;
+    for (const auto& model : models) {
+        scene["models"].push_back(model.serialize());
+    }
+    std::ofstream file(filename);
+    file << scene.dump(4);  // Save with indentation for readability
+}
+
+std::vector<Model> loadScene(const std::string& filename) {
+    std::ifstream file(filename);
+    nlohmann::json scene;
+    file >> scene;
+    std::vector<Model> models;
+    for (const auto& jModel : scene["models"]) {
+        Model model;
+        model.deserialize(jModel);
+        models.push_back(model);
+    }
+    return models;
 }
 
 void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
