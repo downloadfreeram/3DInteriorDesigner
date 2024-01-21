@@ -83,7 +83,7 @@ void DeleteObject(std::string name,int id) {
     modelNames.erase(modelNames.begin() + id);
 }
 void saveGameState(const std::string& filename, const std::vector<Model>& models);
-void loadGameState(const std::string& filename, std::vector<Model>& models);
+void loadGameState(const std::string& filename, std::vector<Model>& models, Shader& ourShader);
 
 void DisplaySecondaryWindow() {
     showMainMenu = false;
@@ -113,7 +113,7 @@ void MainMenu() {
         DisplayChooseWindow();
     }
     if (ImGui::Button("Load Scene")) {
-        loadGameState("file.bin", models);
+        loadGameState("file.bin", models,ourShader);
         DisplayModelWindow();
     }
     ImGui::End();

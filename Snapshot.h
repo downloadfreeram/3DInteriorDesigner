@@ -151,7 +151,6 @@ struct ModelSnapshot {
         model.setPosition(position);
         model.setRotation(rotation);
         model.setScale(scale);
-        // Set other properties to the model here
     }
 
     // serialize the snapshot to an output stream
@@ -226,15 +225,27 @@ struct ModelSnapshot {
             return vec;
         }
         std::string deserializeString(std::istream& is) {
-            uint32_t length;
+            size_t length;
             is.read(reinterpret_cast<char*>(&length), sizeof(length));
-            if (length > 300) {
-                throw std::runtime_error("unreasonable string count");
+
+            // Adding a sanity check for length
+            if (length > 300 || length == 0 || is.fail()) {
+                std::cerr << "Invalid string length encountered during deserialization: " << length << std::endl;
+                throw std::runtime_error("Deserialization error due to invalid string length.");
             }
-            std::string str(length, '\0');
+
+            std::string str;
+            str.resize(length);
             is.read(&str[0], length);
+
+            if (is.fail()) {
+                std::cerr << "Error reading string data during deserialization." << std::endl;
+                throw std::runtime_error("Deserialization error during string read.");
+            }
+
             return str;
         }
+
         size_t deserializeSizeT(std::istream& is) {
             size_t size;
             is.read(reinterpret_cast<char*>(&size), sizeof(size_t));
