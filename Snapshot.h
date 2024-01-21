@@ -11,6 +11,8 @@ struct MeshSnapshot {
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
 
+    MeshSnapshot() = default;
+
     MeshSnapshot(const Mesh& mesh)
         : vertices(mesh.vertices), indices(mesh.indices), textures(mesh.textures) {}
 
@@ -121,6 +123,8 @@ struct ModelSnapshot {
     glm::vec3 position;
     glm::vec3 rotation;
     glm::vec3 scale;
+    std::string objectName;
+    std::string textureName;
     std::vector<MeshSnapshot> meshes;
     std::vector<Texture> textures;
     ShaderSnapshot shader;
@@ -132,7 +136,7 @@ struct ModelSnapshot {
         : position(model.getPosition()),
         rotation(model.getRotation()),
         scale(model.getScale()) {
-        for (const auto& mesh : model.meshes) {  // Ensure model.meshes is accessible
+        for (const auto& mesh : model.meshes) {  
             meshes.push_back(MeshSnapshot(mesh));
         }
         textures = model.textures_loaded;
@@ -153,7 +157,32 @@ struct ModelSnapshot {
         os.write(reinterpret_cast<const char*>(&position), sizeof(position));
         os.write(reinterpret_cast<const char*>(&rotation), sizeof(rotation));
         os.write(reinterpret_cast<const char*>(&scale), sizeof(scale));
-        // Serialize other properties here
+
+        // Serialize object name
+        size_t objectNameLength = objectName.length();
+        os.write(reinterpret_cast<const char*>(&objectNameLength), sizeof(objectNameLength));
+        os.write(objectName.c_str(), objectNameLength);
+
+        // Serialize texture name
+        size_t textureNameLength = textureName.length();
+        os.write(reinterpret_cast<const char*>(&textureNameLength), sizeof(textureNameLength));
+        os.write(textureName.c_str(), textureNameLength);
+
+        // serialize meshes
+        size_t numMeshes = meshes.size();
+        os.write(reinterpret_cast<const char*>(&numMeshes), sizeof(numMeshes));
+        for (const auto& mesh : meshes) {
+            mesh.serialize(os);
+        }
+
+        // serialize textures
+        size_t sizeTextures = textures.size();
+        os.write(reinterpret_cast<const char*>(&sizeTextures), sizeof(sizeTextures));
+        for (const auto& texture : textures) {
+            size_t pathLength = texture.path.length();
+            os.write(reinterpret_cast<const char*>(&pathLength), sizeof(pathLength));
+            os.write(texture.path.c_str(), pathLength);
+        }
     }
 
     // deserialize the snapshot from an input stream
@@ -161,7 +190,44 @@ struct ModelSnapshot {
         is.read(reinterpret_cast<char*>(&position), sizeof(position));
         is.read(reinterpret_cast<char*>(&rotation), sizeof(rotation));
         is.read(reinterpret_cast<char*>(&scale), sizeof(scale));
-        // Deserialize other properties here
+
+        // Deserialize object name
+        size_t objectNameLength;
+        is.read(reinterpret_cast<char*>(&objectNameLength), sizeof(objectNameLength));
+        char* objectNameBuffer = new char[objectNameLength + 1];
+        is.read(objectNameBuffer, objectNameLength);
+        objectNameBuffer[objectNameLength] = '\0';
+        objectName = std::string(objectNameBuffer);
+        delete[] objectNameBuffer;
+
+        // Deserialize texture name
+        size_t textureNameLength;
+        is.read(reinterpret_cast<char*>(&textureNameLength), sizeof(textureNameLength));
+        char* textureNameBuffer = new char[textureNameLength + 1];
+        is.read(textureNameBuffer, textureNameLength);
+        textureNameBuffer[textureNameLength] = '\0';
+        textureName = std::string(textureNameBuffer);
+        delete[] textureNameBuffer;
+
+        // Deserialize meshes
+        size_t numMeshes;
+        is.read(reinterpret_cast<char*>(&numMeshes), sizeof(numMeshes));
+        meshes.resize(numMeshes);
+        for (auto& mesh : meshes) {
+            mesh.deserialize(is);
+        }
+
+        size_t sizeTextures;
+        is.read(reinterpret_cast<char*>(&sizeTextures), sizeof(sizeTextures));
+        textures.resize(sizeTextures);
+        for (auto& texture : textures) {
+            size_t pathLength;
+            is.read(reinterpret_cast<char*>(&pathLength), sizeof(pathLength));
+            texture.path.resize(pathLength);
+            is.read(&texture.path[0], pathLength);
+            texture.id = TextureFromFile(texture.path.c_str(), "resources/objects");
+        }
+        
     }
 };
 

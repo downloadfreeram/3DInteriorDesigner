@@ -28,6 +28,8 @@ Camera camera(SCR_WIDTH, SCR_HEIGHT, 45.0f, glm::vec3(0.0f, 0.0f, 2.0f));
 // room
 Model room;
 
+Shader ourShader;
+
 //menu logic
 bool showMainMenu = true;
 bool showSecondaryWindow = false;
@@ -57,9 +59,11 @@ std::string GenerateUniqueName(const std::string& defaultName) {
 }
 
 // function to generate and render an object
-void GenerateObject(std::string name, const char* texName, Shader& ourShader, int id, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale,std::string menuName) {
+void GenerateObject(std::string name, const std::string& texName, Shader& ourShader, int id, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale,std::string menuName) {
     // load the model
     Model ourModel(string("resources/objects/") + name, id, position, rotation, scale);
+    ourModel.objectName = menuName;
+    ourModel.textureName = texName;
     models.push_back(ourModel);
 
     std::string uniqueName = GenerateUniqueName(menuName); 
@@ -67,7 +71,7 @@ void GenerateObject(std::string name, const char* texName, Shader& ourShader, in
     
 
     // load texture
-    TextureFromFile(texName, "resources/objects");
+    TextureFromFile(texName.c_str(), "resources/objects");
 
     // draw the model
     ourModel.Draw(ourShader);
@@ -326,9 +330,18 @@ void loadGameState(const std::string& filename, std::vector<Model>& models) {
         ModelSnapshot snapshot;
         snapshot.deserialize(inFile);
 
-        Model model;
-        snapshot.applyToModel(model);
-        models.push_back(model);
+        std::string name = snapshot.objectName;
+        std::string texName = snapshot.textureName;
+        int id = models.size();
+        glm::vec3 position = snapshot.position;
+        glm::vec3 rotation = snapshot.rotation;
+        glm::vec3 scale = snapshot.scale;
+        std::string menuName = snapshot.objectName;
+
+        GenerateObject(name, texName, ourShader, id, position, rotation, scale, menuName);
+        //Model model;
+        //snapshot.applyToModel(model);
+        //models.push_back(model);
     }
 }
 

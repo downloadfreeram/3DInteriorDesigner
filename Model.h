@@ -31,8 +31,9 @@ public:
     // model data 
     vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     vector<Mesh>    meshes;
+    std::string objectName;
+    std::string textureName;
     string directory;
-    bool gammaCorrection;
     int id;
     glm::vec3 position;
     glm::vec3 rotation;
