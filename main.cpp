@@ -14,6 +14,7 @@
 #include "Shader.h"
 
 #include <iostream>
+#include <chrono>
 
 
 // settings
@@ -196,7 +197,8 @@ void LoadTextures() {
     texture4 = LoadTexture("resources/images/image4.png");
 }
 
-std::vector<std::string> roomModelNames = { "room1.obj", "room2.obj" };
+// vector to determine which room to load
+std::vector<std::string> roomModelNames = { "room.obj", "room1.obj" };
 std::string selectedRoomModel;
 
 void ChooseWindow() {
@@ -204,7 +206,7 @@ void ChooseWindow() {
     ImGui::Text("Choose the room preset");
 
     // Number of buttons
-    int numButtons = 4;
+    int numButtons = roomModelNames.size();
 
     ImGui::Columns(numButtons, nullptr, false);
     ImTextureID imguiTextureIDs[] = {
@@ -214,17 +216,25 @@ void ChooseWindow() {
         reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture4))
     };
 
-    for (int i = 0; i < numButtons; ++i) {
-        ImGui::SetColumnWidth(i, 200.0f);
-        if (ImGui::ImageButton(imguiTextureIDs[i], ImVec2(200, 200))) {
-            showChooseWindow = false;
-            showModelWindow = true;
-            selectedRoomModel = roomModelNames[i];
-        }
-        ImGui::Text("Preset %d", i + 1);
-        if (i < numButtons - 1) {
-            ImGui::NextColumn();
-        }
+    // check if there are enough textures for buttons
+    assert(numButtons <= sizeof(imguiTextureIDs) / sizeof(imguiTextureIDs[0]));
+    ImVec2 imageSize(100, 100);
+
+    ImGui::SetColumnWidth(0, 200.0f);
+    ImGui::Image(imguiTextureIDs[0], imageSize);
+    if (ImGui::Button("Preset #1")) {
+        std::cout << "klik" << std::endl;
+        showChooseWindow = false;
+        showModelWindow = true;
+        selectedRoomModel = roomModelNames[0];
+    }
+    ImGui::SetColumnWidth(1, 200.0f);
+    ImGui::Image(imguiTextureIDs[1], imageSize);
+    if (ImGui::Button("Preset #2")) {
+        std::cout << "klik" << std::endl;
+        showChooseWindow = false;
+        showModelWindow = true;
+        selectedRoomModel = roomModelNames[1];
     }
 
     ImGui::Columns(1);
@@ -395,7 +405,6 @@ int main()
         }
 
         if (showModelWindow) {
-            std::cout << "Rendering model window" << std::endl;
             initializeScene(ourShader,"texture_diffuse1.jpg",selectedRoomModel);
             RenderModelWindow(window, ourShader);
         }
