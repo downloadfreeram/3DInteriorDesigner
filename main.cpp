@@ -331,13 +331,13 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
 
     if (ImGui::BeginPopup("Generate")) 
     {
-        if (ImGui::Button("Generate Cube")) {
-            GenerateObject("untitled.obj", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Cube");
+        if (ImGui::Button("Standard Chair")) {
+            GenerateObject("chair_normal.obj", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Standard Chair");
         }
 
 
-        if (ImGui::Button("Generate Chair")) {
-            GenerateObject("test.obj", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Chair");
+        if (ImGui::Button("Dresser")) {
+            GenerateObject("dresser.obj", "texture_diffuse3.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.5),"Dresser");
         }
 
         ImGui::EndPopup();
@@ -435,7 +435,7 @@ int main()
         }
 
         if (showModelWindow) {
-            initializeScene(ourShader,"texture_diffuse1.jpg",selectedRoomModel);
+            initializeScene(ourShader,"texture_diffuse2.jpg",selectedRoomModel);
             RenderModelWindow(window, ourShader);
         }
 

@@ -85,6 +85,10 @@ public:
     glm::vec3 getScale() const {
         return scale;
     }
+    void setShaderPaths(const std::string& vertexPath, const std::string& fragmentPath) {
+        shader.vertexShaderPath = vertexPath;
+        shader.fragmentShaderPath = fragmentPath;
+    }
     Shader& getShader() {
         return shader;
     }
