@@ -2,6 +2,8 @@
 #define MODEL_SNAPSHOT_H
 
 #include <iostream>
+#include <cstdint>
+#include <limits>
 #include <glm/glm.hpp>
 #include "Model.h"  
 #include "Mesh.h"
@@ -187,48 +189,57 @@ struct ModelSnapshot {
 
     // deserialize the snapshot from an input stream
     void deserialize(std::istream& is) {
-        is.read(reinterpret_cast<char*>(&position), sizeof(position));
-        is.read(reinterpret_cast<char*>(&rotation), sizeof(rotation));
-        is.read(reinterpret_cast<char*>(&scale), sizeof(scale));
+        position = deserializeVec3(is);
+        rotation = deserializeVec3(is);
+        scale = deserializeVec3(is);
 
-        // Deserialize object name
-        size_t objectNameLength;
-        is.read(reinterpret_cast<char*>(&objectNameLength), sizeof(objectNameLength));
-        char* objectNameBuffer = new char[objectNameLength + 1];
-        is.read(objectNameBuffer, objectNameLength);
-        objectNameBuffer[objectNameLength] = '\0';
-        objectName = std::string(objectNameBuffer);
-        delete[] objectNameBuffer;
+        objectName = deserializeString(is);
 
-        // Deserialize texture name
-        size_t textureNameLength;
-        is.read(reinterpret_cast<char*>(&textureNameLength), sizeof(textureNameLength));
-        char* textureNameBuffer = new char[textureNameLength + 1];
-        is.read(textureNameBuffer, textureNameLength);
-        textureNameBuffer[textureNameLength] = '\0';
-        textureName = std::string(textureNameBuffer);
-        delete[] textureNameBuffer;
+        textureName = deserializeString(is);
 
         // Deserialize meshes
-        size_t numMeshes;
-        is.read(reinterpret_cast<char*>(&numMeshes), sizeof(numMeshes));
+        size_t numMeshes = deserializeSizeT(is);
+        if (numMeshes > 100) {
+            throw std::runtime_error("unreasonable mesh count read from file");
+        }
         meshes.resize(numMeshes);
         for (auto& mesh : meshes) {
             mesh.deserialize(is);
         }
 
-        size_t sizeTextures;
-        is.read(reinterpret_cast<char*>(&sizeTextures), sizeof(sizeTextures));
+        //deserialize textures
+        size_t sizeTextures = deserializeSizeT(is);
+        if (sizeTextures > 100) {
+            throw std::runtime_error("unreasonable texture count read from file");
+        }
         textures.resize(sizeTextures);
         for (auto& texture : textures) {
-            size_t pathLength;
-            is.read(reinterpret_cast<char*>(&pathLength), sizeof(pathLength));
-            texture.path.resize(pathLength);
-            is.read(&texture.path[0], pathLength);
+            texture.path = deserializeString(is);
             texture.id = TextureFromFile(texture.path.c_str(), "resources/objects");
         }
         
     }
+    private:
+        glm::vec3 deserializeVec3(std::istream& is) {
+            glm::vec3 vec;
+            is.read(reinterpret_cast<char*>(&vec), sizeof(glm::vec3));
+            return vec;
+        }
+        std::string deserializeString(std::istream& is) {
+            uint32_t length;
+            is.read(reinterpret_cast<char*>(&length), sizeof(length));
+            if (length > 300) {
+                throw std::runtime_error("unreasonable string count");
+            }
+            std::string str(length, '\0');
+            is.read(&str[0], length);
+            return str;
+        }
+        size_t deserializeSizeT(std::istream& is) {
+            size_t size;
+            is.read(reinterpret_cast<char*>(&size), sizeof(size_t));
+            return size;
+        }
 };
 
 #endif // MODEL_SNAPSHOT_H

@@ -228,6 +228,12 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
 
     ImGui::Begin("Viewport", &showModelWindow);
 
+    for (auto& name : modelNames) {
+        if (name.empty()) {
+            std::cerr << "ERROR: empty model name!" << std::endl;
+            name = "none";
+        }
+    }
     // dropdown menu for every object
     if (ImGui::BeginCombo("Select Model", selectedId >= 0 ? modelNames[selectedId].c_str() : "None")) {
         for (int i = 0; i < modelNames.size(); i++) {
@@ -271,13 +277,13 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
 
     if (ImGui::BeginPopup("Generate")) 
     {
-        if (ImGui::Button("Generate Cube")) {
-            GenerateObject("untitled.obj", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Cube");
+        if (ImGui::Button("Standard Chair")) {
+            GenerateObject("chair_normal.obj", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Standard Chair");
         }
 
 
-        if (ImGui::Button("Generate Chair")) {
-            GenerateObject("test.obj", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Chair");
+        if (ImGui::Button("Dresser")) {
+            GenerateObject("dresser.obj", "texture_diffuse3.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Dresser");
         }
 
         ImGui::EndPopup();
@@ -314,6 +320,7 @@ void saveGameState(const std::string& filename, const std::vector<Model>& models
     }
 
     for (const auto& model : models) {
+        std::cout << model.objectName << std::endl;
         ModelSnapshot snapshot(model);
         snapshot.serialize(outFile);
     }
@@ -329,6 +336,8 @@ void loadGameState(const std::string& filename, std::vector<Model>& models) {
     while (inFile.peek() != EOF) {
         ModelSnapshot snapshot;
         snapshot.deserialize(inFile);
+
+        std::cout << snapshot.objectName << std::endl;
 
         std::string name = snapshot.objectName;
         std::string texName = snapshot.textureName;
