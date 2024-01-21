@@ -326,33 +326,51 @@ void saveGameState(const std::string& filename, const std::vector<Model>& models
     }
 }
 
-void loadGameState(const std::string& filename, std::vector<Model>& models) {
+void loadGameState(const std::string& filename, std::vector<Model>& models, Shader& shader) {
     std::ifstream inFile(filename, std::ios::binary);
     if (!inFile) {
         throw std::runtime_error("Failed to open file for loading");
     }
 
-    models.clear();
+    models.clear(); // Clear existing models
+
     while (inFile.peek() != EOF) {
         ModelSnapshot snapshot;
         snapshot.deserialize(inFile);
 
-        std::cout << snapshot.objectName << std::endl;
+        Model model;
+        model.setPosition(snapshot.position);
+        model.setRotation(snapshot.rotation);
+        model.setScale(snapshot.scale);
+        model.objectName = snapshot.objectName;
+        model.textureName = snapshot.textureName;
 
-        std::string name = snapshot.objectName;
-        std::string texName = snapshot.textureName;
-        int id = models.size();
-        glm::vec3 position = snapshot.position;
-        glm::vec3 rotation = snapshot.rotation;
-        glm::vec3 scale = snapshot.scale;
-        std::string menuName = snapshot.objectName;
+        // Load model meshes
+        for (auto& meshSnapshot : snapshot.meshes) {
+            Mesh mesh;
+            meshSnapshot.applyToMesh(mesh);
+            model.meshes.push_back(mesh);
+        }
 
-        GenerateObject(name, texName, ourShader, id, position, rotation, scale, menuName);
-        //Model model;
-        //snapshot.applyToModel(model);
-        //models.push_back(model);
+        // Load model textures
+        for (const auto& textureSnapshot : snapshot.textures) {
+            Texture texture;
+            texture.id = TextureFromFile(textureSnapshot.path.c_str(), "resources/objects");
+            texture.type = textureSnapshot.type;
+            texture.path = textureSnapshot.path;
+            model.textures_loaded.push_back(texture);
+        }
+
+        // Apply shader snapshot
+        ShaderSnapshot shaderSnapshot = snapshot.shader;
+        shader.vertexShaderPath = shaderSnapshot.vertexShaderPath;
+        shader.fragmentShaderPath = shaderSnapshot.fragmentShaderPath;
+        shader.recompileAndRelink();
+
+        models.push_back(model);
     }
 }
+
 
 
 int main()
