@@ -225,11 +225,15 @@ void initializeScene(Shader& ourShader,const char* texName,const std::string roo
     ourShader.use();
 }
 
-nlohmann::json serializeModel(const Model& model) {
+nlohmann::json serializeModel(Model& model) {
     nlohmann::json j;
     j["position"] = { model.getPosition().x, model.getPosition().y, model.getPosition().z };
     j["rotation"] = { model.getRotation().x, model.getRotation().y, model.getRotation().z };
     j["scale"] = { model.getScale().x, model.getScale().y, model.getScale().z };
+
+    Shader& modelShader = model.getShader();
+    nlohmann::json serializedShader = modelShader.serialize();
+    j["shader"] = serializedShader;
     return j;
 }
 Model deserializeModel(const nlohmann::json& j) {
@@ -240,13 +244,25 @@ Model deserializeModel(const nlohmann::json& j) {
     model.setScale(glm::vec3(j["scale"][0], j["scale"][1], j["scale"][2]));
     return model;
 }
-void saveScene(const std::vector<Model>& models, const std::string& filename) {
+void saveScene(std::vector<Model>& models, const std::string& filename) {
     nlohmann::json scene;
-    for (const auto& model : models) {
-        scene["models"].push_back(model.serialize());
+    for (auto& model : models) {
+        nlohmann::json serializedModel = serializeModel(model);
+        Shader& modelShader = model.getShader();
+        nlohmann::json serializedShader = modelShader.serialize();
+        serializedModel["shader"] = serializedShader;
+        
+        scene["models"].push_back(serializedModel);
     }
     std::ofstream file(filename);
-    file << scene.dump(4);  // Save with indentation for readability
+    if (file.is_open()) {
+        file << scene.dump(4); // serialize with indendation for readability
+        file.close();
+        std::cout << "Scene saved to " << filename << std::endl;
+    }
+    else {
+        std::cerr << "Unable to open file for writing: " << filename << std::endl;
+    }
 }
 
 std::vector<Model> loadScene(const std::string& filename) {
@@ -346,7 +362,6 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
     {
         saveScene(models, "scene.json"); // Saves the current scene to a file
-        std::cout << "Scene has been successfully saved" << std::endl;
     }
 
     ImGui::End();
@@ -386,6 +401,7 @@ int main()
 
     // build and compile shaders
     Shader ourShader("default.vert", "default.frag");
+    std::cout << ourShader.vertexShaderPath << "   "<<ourShader.fragmentShaderPath << std::endl;
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();

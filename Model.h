@@ -38,8 +38,6 @@ public:
     glm::vec3 rotation;
     glm::vec3 scale;
 
-    Mesh mesh;
-    Shader shader;
 
     glm::mat4 GetTransformMatrix() const {
         glm::mat4 trans = glm::mat4(1.0f);
@@ -87,6 +85,9 @@ public:
     glm::vec3 getScale() const {
         return scale;
     }
+    Shader& getShader() {
+        return shader;
+    }
     // Setter for position
     void setPosition(const glm::vec3& newPosition) {
         position = newPosition;
@@ -126,6 +127,8 @@ public:
     }
 
 private:
+    Mesh mesh;
+    Shader shader;
     // loads a model and stores the resulting meshes in the meshes vector.
     void loadModel(string const& path)
     {

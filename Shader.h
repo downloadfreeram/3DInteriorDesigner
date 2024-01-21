@@ -35,6 +35,8 @@ public:
         std::string fragmentCode;
         std::ifstream vShaderFile;
         std::ifstream fShaderFile;
+        this->vertexShaderPath = vertexPath;
+        this->fragmentShaderPath = fragmentPath;
         // ensure ifstream objects can throw exceptions:
         vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
