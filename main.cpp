@@ -344,6 +344,7 @@ void loadGameState(const std::string& filename, std::vector<Model>& models, Shad
         model.setScale(snapshot.scale);
         model.objectName = snapshot.objectName;
         model.textureName = snapshot.textureName;
+        modelNames.push_back(model.objectName);
 
         // Load model meshes
         for (auto& meshSnapshot : snapshot.meshes) {
@@ -370,8 +371,6 @@ void loadGameState(const std::string& filename, std::vector<Model>& models, Shad
         models.push_back(model);
     }
 }
-
-
 
 int main()
 {
