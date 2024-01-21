@@ -401,7 +401,7 @@ int main()
         }
 
         if (showModelWindow) {
-            initializeScene(ourShader,"texture_diffuse1.jpg",selectedRoomModel);
+            initializeScene(ourShader,"texture_diffuse2.jpg",selectedRoomModel);
             RenderModelWindow(window, ourShader);
         }
 
