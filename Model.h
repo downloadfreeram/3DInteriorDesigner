@@ -37,6 +37,8 @@ public:
     glm::vec3 position;
     glm::vec3 rotation;
     glm::vec3 scale;
+    Mesh mesh;
+    Shader shader;
 
 
     glm::mat4 GetTransformMatrix() const {
@@ -89,7 +91,7 @@ public:
         shader.vertexShaderPath = vertexPath;
         shader.fragmentShaderPath = fragmentPath;
     }
-    Shader& getShader() {
+    const Shader& getShader() const {
         return shader;
     }
     // Setter for position
@@ -108,8 +110,6 @@ public:
     }
 
 private:
-    Mesh mesh;
-    Shader shader;
     // loads a model and stores the resulting meshes in the meshes vector.
     void loadModel(string const& path)
     {

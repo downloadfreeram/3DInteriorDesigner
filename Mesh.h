@@ -91,10 +91,6 @@ public:
         glActiveTexture(GL_TEXTURE0);
     }
 
-private:
-    // render data 
-    unsigned int VBO, EBO;
-
     // initializes all the buffer objects/arrays
     void setupMesh()
     {
@@ -138,6 +134,10 @@ private:
         glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
         glBindVertexArray(0);
     }
+private:
+    // render data 
+    unsigned int VBO, EBO;
+
 };
 #endif
 
