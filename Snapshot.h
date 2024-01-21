@@ -225,26 +225,30 @@ struct ModelSnapshot {
             return vec;
         }
         std::string deserializeString(std::istream& is) {
+            // Read the length of the string
             size_t length;
             is.read(reinterpret_cast<char*>(&length), sizeof(length));
 
-            // Adding a sanity check for length
-            if (length > 300 || length == 0 || is.fail()) {
-                std::cerr << "Invalid string length encountered during deserialization: " << length << std::endl;
-                throw std::runtime_error("Deserialization error due to invalid string length.");
+            // Check if the length is unreasonably large or if the stream has failed
+            if (length > 10000 || is.fail()) {
+                throw std::runtime_error("Invalid string length during deserialization");
             }
 
-            std::string str;
-            str.resize(length);
-            is.read(&str[0], length);
+            // Create a buffer of the appropriate length
+            std::vector<char> buffer(length);
 
+            // Read the string data into the buffer
+            is.read(buffer.data(), length);
+
+            // Check for read failure
             if (is.fail()) {
-                std::cerr << "Error reading string data during deserialization." << std::endl;
-                throw std::runtime_error("Deserialization error during string read.");
+                throw std::runtime_error("Failed to read string during deserialization");
             }
 
-            return str;
+            // Construct and return the string from the buffer
+            return std::string(buffer.begin(), buffer.end());
         }
+
 
         size_t deserializeSizeT(std::istream& is) {
             size_t size;
