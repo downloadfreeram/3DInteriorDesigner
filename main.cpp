@@ -39,6 +39,7 @@ bool showMainMenu = true;
 bool showSecondaryWindow = false;
 bool showModelWindow = false;
 bool showChooseWindow = false;
+bool ImGuiHandlingInput = false;
 
 
 std::vector<Model> models;  //vector of objects
@@ -142,7 +143,15 @@ void GenerateObject(std::string name, const std::string& texName, Shader& ourSha
     
 
     // load texture
-    TextureFromFile(texName.c_str(), "resources/objects");
+    GLuint textureID = TextureFromFile(texName.c_str(), "resources/objects");
+
+    // set the texture for the generated model
+    ourModel.textures_loaded.clear(); // clear existing textures (if any)
+    Texture texture;
+    texture.id = textureID;
+    texture.type = "texture_diffuse"; 
+    texture.path = texName;
+    ourModel.textures_loaded.push_back(texture);
 
     // draw the model
     ourModel.Draw(ourShader);
@@ -300,6 +309,16 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     ourShader.setMat4("model", room.GetTransformMatrix());
     room.Draw(ourShader);
 
+    ImGuiHandlingInput = ImGui::GetIO().WantCaptureMouse;
+
+    // process camera inputs only if ImGui is not handling input
+    if (!ImGuiHandlingInput) {
+        camera.updateMatrix(camera.zoom, 0.1f, 100.0f);
+        camera.Inputs(window);
+    }
+
+
+
     ImGui::Begin("Viewport", &showModelWindow);
 
     for (auto& name : modelNames) {
@@ -309,7 +328,8 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
         }
     }
     // dropdown menu for every object
-    if (ImGui::BeginCombo("Select Model", selectedId >= 0 ? modelNames[selectedId].c_str() : "None")) {
+    const char* combo_preview = selectedId >= 0 ? modelNames[selectedId].c_str() : "Select a model";
+    if (ImGui::BeginCombo("Model", combo_preview)) {
         for (int i = 0; i < modelNames.size(); i++) {
             bool isSelected = (selectedId == i);
             if (ImGui::Selectable(modelNames[i].c_str(), isSelected)) {
@@ -325,7 +345,7 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     // options for every object generated
     if (selectedId >= 0 && selectedId < models.size()) {
         ImGui::SliderFloat("X Position", &models[selectedId].position.x, -20.0f, 20.0f);
-        ImGui::SliderFloat("Y Position", &models[selectedId].position.y, 0.0f, 20.0f);
+        ImGui::SliderFloat("Y Position", &models[selectedId].position.y, -20.0f, 20.0f);
         ImGui::SliderFloat("Z Position", &models[selectedId].position.z, -20.0f, 20.0f);
 
 
@@ -363,15 +383,16 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
         ImGui::EndPopup();
     }
 
-    //loop to iterate each model in vector
-    for (Model& model : models) {
-        // set transformations for specific object
+    // Batch rendering of all models
+    for (const Model& model : models) {
+        // Set transformations for specific object
         glm::mat4 modelMatrix = model.GetTransformMatrix();
         ourShader.setMat4("model", modelMatrix);
+
+        // Draw the model
         model.Draw(ourShader);
     }
 
-    // ImGui input handling
     bool ImGuiHandlingInput = ImGui::GetIO().WantCaptureMouse;
 
     // process camera inputs only if ImGui is not handling input
@@ -421,7 +442,13 @@ void loadGameState(const std::string& filename, std::vector<Model>& models, Shad
         model.setScale(snapshot.scale);
         model.objectName = snapshot.objectName;
         model.textureName = snapshot.textureName;
-        modelNames.push_back(model.objectName);
+
+        if (!model.objectName.empty()) {
+            modelNames.push_back(model.objectName);
+        }
+        else {
+            std::cerr << "WARNING: Loaded model with an empty name" << std::endl;
+        }
 
         // Load model meshes
         for (auto& meshSnapshot : snapshot.meshes) {

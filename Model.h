@@ -29,8 +29,8 @@ class Model
 {
 public:
     // model data 
-    vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     vector<Mesh>    meshes;
+    vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     std::string objectName;
     std::string textureName;
     string directory;
@@ -68,12 +68,12 @@ public:
         loadModel(modelPath);
     }
 
-    // draws the model
-    void Draw(Shader& shader)
+    void Draw(const Shader& shader) const
     {
         for (unsigned int i = 0; i < meshes.size(); i++)
-            meshes[i].Draw(shader);
+            meshes[i].Draw(shader);  // Pass the provided shader to the Draw function of each mesh
     }
+
     // Getter for position
     glm::vec3 getPosition() const {
         return position;

@@ -54,7 +54,7 @@ public:
     }
 
     // render the mesh
-    void Draw(Shader& shader)
+    void Draw(const Shader& shader) const
     {
         // bind appropriate textures
         unsigned int diffuseNr = 1;
