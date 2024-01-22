@@ -166,8 +166,12 @@ void DeleteObject(std::string name,int id) {
     models.erase(models.begin()+id);
     modelNames.erase(modelNames.begin() + id);
 }
+// vector to determine which room to load
+std::vector<std::string> roomModelNames = { "room.obj", "room1.obj" };
+std::string selectedRoomModel;
+
 void saveGameState(const std::string& filepath, const std::vector<Model>& models);
-void loadGameState(const std::string& filepath, std::vector<Model>& models, Shader& ourShader);
+void loadGameState(const std::string& filepath, std::vector<Model>& models, Shader& ourShader, string& selectedRoomModel);
 
 void DisplaySecondaryWindow() {
     showMainMenu = false;
@@ -186,6 +190,7 @@ void DisplayChooseWindow() {
     showModelWindow = false;
 }
 
+
 void MainMenu() {
     ImGui::Begin("Main Menu", &showMainMenu);
 
@@ -199,7 +204,7 @@ void MainMenu() {
     if (ImGui::Button("Load Scene")) {
         std::string filepath = OpenFileDialog();
         if (!filepath.empty()) {
-            loadGameState(filepath, models, ourShader);
+            loadGameState(filepath, models, ourShader, selectedRoomModel);
             DisplayModelWindow(); 
         }
     }
@@ -254,9 +259,6 @@ void LoadTextures() {
     texture4 = LoadTexture("resources/images/image4.png");
 }
 
-// vector to determine which room to load
-std::vector<std::string> roomModelNames = { "room.obj", "room1.obj" };
-std::string selectedRoomModel;
 
 void ChooseWindow() {
     ImGui::Begin("Choose a room", &showChooseWindow);
@@ -429,7 +431,7 @@ void saveGameState(const std::string& filepath, const std::vector<Model>& models
     }
 }
 
-void loadGameState(const std::string& filepath, std::vector<Model>& models, Shader& shader) {
+void loadGameState(const std::string& filepath, std::vector<Model>& models, Shader& shader, std::string& selectedRoomModel) {
     std::ifstream inFile(filepath, std::ios::binary);
 
     std::cout << filepath << std::endl;
@@ -477,7 +479,10 @@ void loadGameState(const std::string& filepath, std::vector<Model>& models, Shad
         shader.recompileAndRelink();
 
         models.push_back(model);
+
     }
+    selectedRoomModel = "room1.obj";
+    initializeScene(shader, "texture_diffuse2.jpg", selectedRoomModel);
 }
 
 int main()
