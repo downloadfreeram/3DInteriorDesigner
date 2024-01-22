@@ -21,6 +21,7 @@
 #include <commdlg.h>  
 
 
+
 // settings
 const unsigned int SCR_WIDTH = 1600;
 const unsigned int SCR_HEIGHT = 1200;
@@ -65,7 +66,7 @@ std::string OpenFileDialog() {
     // use the contents of szFile to initialize itself.
     ofn.lpstrFile[0] = '\0';
     ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = "BIN Files (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
+    ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
     ofn.nFilterIndex = 1;
     ofn.lpstrFileTitle = NULL;
     ofn.nMaxFileTitle = 0;
@@ -97,7 +98,7 @@ std::string SaveFileDialog() {
     ofn.lpstrFile = szFile;
     ofn.lpstrFile[0] = '\0';
     ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = "BIN Files (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
+    ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
     ofn.nFilterIndex = 1;
     ofn.lpstrFileTitle = NULL;
     ofn.nMaxFileTitle = 0;
@@ -105,11 +106,6 @@ std::string SaveFileDialog() {
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 
     if (GetSaveFileName(&ofn) == TRUE) {
-        std::string filepath = ofn.lpstrFile;
-        //Check if the file has an extension
-        if (filepath.find_last_of(".") == std::string::npos) {
-            filepath += ".bin";
-        }
         hf = CreateFile(ofn.lpstrFile,
             GENERIC_WRITE,
             0,
@@ -117,7 +113,7 @@ std::string SaveFileDialog() {
             CREATE_NEW,
             FILE_ATTRIBUTE_NORMAL,
             (HANDLE)NULL);
-        return filepath;
+        return ofn.lpstrFile;
     }
     return "";
 }
@@ -200,7 +196,7 @@ void MainMenu() {
         std::string filepath = OpenFileDialog();
         if (!filepath.empty()) {
             loadGameState(filepath, models, ourShader);
-            DisplayModelWindow();
+            DisplayModelWindow(); 
         }
     }
     ImGui::End();
@@ -415,8 +411,8 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
 
     ImGui::End();
 }
-void saveGameState(const std::string& filepath, const std::vector<Model>& models) {
-    std::ofstream outFile(filepath, std::ios::binary);
+void saveGameState(const std::string& filename, const std::vector<Model>& models) {
+    std::ofstream outFile(filename, std::ios::binary);
     if (!outFile) {
         throw std::runtime_error("Failed to open file for saving");
     }
@@ -426,78 +422,59 @@ void saveGameState(const std::string& filepath, const std::vector<Model>& models
         ModelSnapshot snapshot(model);
         snapshot.serialize(outFile);
     }
-    outFile.close();
-    std::cout << filepath << std::endl;
 }
 
-void loadGameState(const std::string& filepath, std::vector<Model>& models, Shader& shader) {
-    std::ifstream inFile(filepath, std::ios::binary);
+void loadGameState(const std::string& filename, std::vector<Model>& models, Shader& shader) {
+    std::ifstream inFile(filename, std::ios::binary);
     if (!inFile) {
-        std::cerr << "Failed to open file for loading: " << filepath << std::endl;
-        return;
+        throw std::runtime_error("Failed to open file for loading");
     }
 
-    std::cout << "Loading game state from file: " << filepath << std::endl;
+    models.clear(); // Clear existing models
 
-    try {
+    while (inFile.peek() != EOF) {
+        ModelSnapshot snapshot;
+        snapshot.deserialize(inFile);
 
-        models.clear(); // Clear existing models
+        Model model;
+        model.setPosition(snapshot.position);
+        model.setRotation(snapshot.rotation);
+        model.setScale(snapshot.scale);
+        model.objectName = snapshot.objectName;
+        model.textureName = snapshot.textureName;
 
-        while (inFile.peek() != EOF) {
-            ModelSnapshot snapshot;
-            snapshot.deserialize(inFile);
-
-            // Debug statement
-            std::cout << "Loaded snapshot from file" << std::endl;
-
-            Model model;
-            model.setPosition(snapshot.position);
-            model.setRotation(snapshot.rotation);
-            model.setScale(snapshot.scale);
-            model.objectName = snapshot.objectName;
-            model.textureName = snapshot.textureName;
-
-            if (!model.objectName.empty()) {
-                modelNames.push_back(model.objectName);
-            }
-            else {
-                std::cerr << "WARNING: Loaded model with an empty name" << std::endl;
-            }
-
-            // Load model meshes
-            for (auto& meshSnapshot : snapshot.meshes) {
-                Mesh mesh;
-                meshSnapshot.applyToMesh(mesh);
-                model.meshes.push_back(mesh);
-            }
-
-            // Load model textures
-            for (const auto& textureSnapshot : snapshot.textures) {
-                Texture texture;
-                texture.id = TextureFromFile(textureSnapshot.path.c_str(), "resources/objects");
-                texture.type = textureSnapshot.type;
-                texture.path = textureSnapshot.path;
-                model.textures_loaded.push_back(texture);
-            }
-
-            // Apply shader snapshot
-            ShaderSnapshot shaderSnapshot = snapshot.shader;
-            shader.vertexShaderPath = shaderSnapshot.vertexShaderPath;
-            shader.fragmentShaderPath = shaderSnapshot.fragmentShaderPath;
-            shader.recompileAndRelink();
-
-            models.push_back(model);
-            initializeScene(ourShader, "texture_diffuse2.jpg", "room1.obj");
+        if (!model.objectName.empty()) {
+            modelNames.push_back(model.objectName);
         }
-    }
-    catch (const std::exception& e) {
-        std::cerr << "Error during loading: " << e.what() << std::endl;
-    }
+        else {
+            std::cerr << "WARNING: Loaded model with an empty name" << std::endl;
+        }
 
-    inFile.close();
-    std::cout << "Finished loading game state from file" << std::endl;
+        // Load model meshes
+        for (auto& meshSnapshot : snapshot.meshes) {
+            Mesh mesh;
+            meshSnapshot.applyToMesh(mesh);
+            model.meshes.push_back(mesh);
+        }
+
+        // Load model textures
+        for (const auto& textureSnapshot : snapshot.textures) {
+            Texture texture;
+            texture.id = TextureFromFile(textureSnapshot.path.c_str(), "resources/objects");
+            texture.type = textureSnapshot.type;
+            texture.path = textureSnapshot.path;
+            model.textures_loaded.push_back(texture);
+        }
+
+        // Apply shader snapshot
+        ShaderSnapshot shaderSnapshot = snapshot.shader;
+        shader.vertexShaderPath = shaderSnapshot.vertexShaderPath;
+        shader.fragmentShaderPath = shaderSnapshot.fragmentShaderPath;
+        shader.recompileAndRelink();
+
+        models.push_back(model);
+    }
 }
-
 
 int main()
 {
