@@ -16,6 +16,9 @@
 
 #include <iostream>
 #include <chrono>
+#define NOMINMAX
+#include <windows.h>
+#include <commdlg.h>  
 
 
 // settings
@@ -46,6 +49,78 @@ int selectedId = -1; // id of the selected model
 //transform variables
 glm::vec3 posXYZ = glm::vec3(0.0f, 0.0f, 0.0f);
 float rot = 0.0f;
+
+std::string OpenFileDialog() {
+    OPENFILENAME ofn;       // common dialog box structure
+    char szFile[260];       // buffer for file name
+    HWND hwnd = NULL;       // owner window
+    HANDLE hf;              // file handle
+
+    // Initialize OPENFILENAME
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFile = szFile;
+    // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+    // use the contents of szFile to initialize itself.
+    ofn.lpstrFile[0] = '\0';
+    ofn.nMaxFile = sizeof(szFile);
+    ofn.lpstrFilter = "BIN Files (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+    // Display the Open dialog box. 
+    if (GetOpenFileName(&ofn) == TRUE) {
+        hf = CreateFile(ofn.lpstrFile,
+            GENERIC_READ,
+            0,
+            (LPSECURITY_ATTRIBUTES)NULL,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL,
+            (HANDLE)NULL);
+        return ofn.lpstrFile;
+    }
+    return "";
+}
+std::string SaveFileDialog() {
+    OPENFILENAME ofn;
+    char szFile[260];
+    HWND hwnd = NULL;
+    HANDLE hf;
+
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFile = szFile;
+    ofn.lpstrFile[0] = '\0';
+    ofn.nMaxFile = sizeof(szFile);
+    ofn.lpstrFilter = "BIN Files (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+
+    if (GetSaveFileName(&ofn) == TRUE) {
+        std::string filepath = ofn.lpstrFile;
+        //Check if the file has an extension
+        if (filepath.find_last_of(".") == std::string::npos) {
+            filepath += ".bin";
+        }
+        hf = CreateFile(ofn.lpstrFile,
+            GENERIC_WRITE,
+            0,
+            (LPSECURITY_ATTRIBUTES)NULL,
+            CREATE_NEW,
+            FILE_ATTRIBUTE_NORMAL,
+            (HANDLE)NULL);
+        return filepath;
+    }
+    return "";
+}
 
 std::string object;
 // function to handle the names of generated objects in the dropdown menu
@@ -91,8 +166,8 @@ void DeleteObject(std::string name,int id) {
     models.erase(models.begin()+id);
     modelNames.erase(modelNames.begin() + id);
 }
-void saveGameState(const std::string& filename, const std::vector<Model>& models);
-void loadGameState(const std::string& filename, std::vector<Model>& models, Shader& ourShader);
+void saveGameState(const std::string& filepath, const std::vector<Model>& models);
+void loadGameState(const std::string& filepath, std::vector<Model>& models, Shader& ourShader);
 
 void DisplaySecondaryWindow() {
     showMainMenu = false;
@@ -122,8 +197,11 @@ void MainMenu() {
         DisplayChooseWindow();
     }
     if (ImGui::Button("Load Scene")) {
-        loadGameState("file.bin", models,ourShader);
-        DisplayModelWindow();
+        std::string filepath = OpenFileDialog();
+        if (!filepath.empty()) {
+            loadGameState(filepath, models, ourShader);
+            DisplayModelWindow();
+        }
     }
     ImGui::End();
 }
@@ -326,16 +404,19 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
         camera.updateMatrix(camera.zoom, 0.1f, 100.0f);
         camera.Inputs(window);
     }
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-    {
-        saveGameState("file.bin", models);
-        std::cout << "Scene has been successfully saved" << std::endl;
+    // Handle 'Q' key for Save
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        std::string filepath = SaveFileDialog();
+        if (!filepath.empty()) {
+            saveGameState(filepath, models);
+            std::cout << "Scene has been successfully saved to " << filepath << std::endl;
+        }
     }
 
     ImGui::End();
 }
-void saveGameState(const std::string& filename, const std::vector<Model>& models) {
-    std::ofstream outFile(filename, std::ios::binary);
+void saveGameState(const std::string& filepath, const std::vector<Model>& models) {
+    std::ofstream outFile(filepath, std::ios::binary);
     if (!outFile) {
         throw std::runtime_error("Failed to open file for saving");
     }
@@ -345,59 +426,78 @@ void saveGameState(const std::string& filename, const std::vector<Model>& models
         ModelSnapshot snapshot(model);
         snapshot.serialize(outFile);
     }
+    outFile.close();
+    std::cout << filepath << std::endl;
 }
 
-void loadGameState(const std::string& filename, std::vector<Model>& models, Shader& shader) {
-    std::ifstream inFile(filename, std::ios::binary);
+void loadGameState(const std::string& filepath, std::vector<Model>& models, Shader& shader) {
+    std::ifstream inFile(filepath, std::ios::binary);
     if (!inFile) {
-        throw std::runtime_error("Failed to open file for loading");
+        std::cerr << "Failed to open file for loading: " << filepath << std::endl;
+        return;
     }
 
-    models.clear(); // Clear existing models
+    std::cout << "Loading game state from file: " << filepath << std::endl;
 
-    while (inFile.peek() != EOF) {
-        ModelSnapshot snapshot;
-        snapshot.deserialize(inFile);
+    try {
 
-        Model model;
-        model.setPosition(snapshot.position);
-        model.setRotation(snapshot.rotation);
-        model.setScale(snapshot.scale);
-        model.objectName = snapshot.objectName;
-        model.textureName = snapshot.textureName;
+        models.clear(); // Clear existing models
 
-        if (!model.objectName.empty()) {
-            modelNames.push_back(model.objectName);
+        while (inFile.peek() != EOF) {
+            ModelSnapshot snapshot;
+            snapshot.deserialize(inFile);
+
+            // Debug statement
+            std::cout << "Loaded snapshot from file" << std::endl;
+
+            Model model;
+            model.setPosition(snapshot.position);
+            model.setRotation(snapshot.rotation);
+            model.setScale(snapshot.scale);
+            model.objectName = snapshot.objectName;
+            model.textureName = snapshot.textureName;
+
+            if (!model.objectName.empty()) {
+                modelNames.push_back(model.objectName);
+            }
+            else {
+                std::cerr << "WARNING: Loaded model with an empty name" << std::endl;
+            }
+
+            // Load model meshes
+            for (auto& meshSnapshot : snapshot.meshes) {
+                Mesh mesh;
+                meshSnapshot.applyToMesh(mesh);
+                model.meshes.push_back(mesh);
+            }
+
+            // Load model textures
+            for (const auto& textureSnapshot : snapshot.textures) {
+                Texture texture;
+                texture.id = TextureFromFile(textureSnapshot.path.c_str(), "resources/objects");
+                texture.type = textureSnapshot.type;
+                texture.path = textureSnapshot.path;
+                model.textures_loaded.push_back(texture);
+            }
+
+            // Apply shader snapshot
+            ShaderSnapshot shaderSnapshot = snapshot.shader;
+            shader.vertexShaderPath = shaderSnapshot.vertexShaderPath;
+            shader.fragmentShaderPath = shaderSnapshot.fragmentShaderPath;
+            shader.recompileAndRelink();
+
+            models.push_back(model);
+            initializeScene(ourShader, "texture_diffuse2.jpg", "room1.obj");
         }
-        else {
-            std::cerr << "WARNING: Loaded model with an empty name" << std::endl;
-        }
-
-        // Load model meshes
-        for (auto& meshSnapshot : snapshot.meshes) {
-            Mesh mesh;
-            meshSnapshot.applyToMesh(mesh);
-            model.meshes.push_back(mesh);
-        }
-
-        // Load model textures
-        for (const auto& textureSnapshot : snapshot.textures) {
-            Texture texture;
-            texture.id = TextureFromFile(textureSnapshot.path.c_str(), "resources/objects");
-            texture.type = textureSnapshot.type;
-            texture.path = textureSnapshot.path;
-            model.textures_loaded.push_back(texture);
-        }
-
-        // Apply shader snapshot
-        ShaderSnapshot shaderSnapshot = snapshot.shader;
-        shader.vertexShaderPath = shaderSnapshot.vertexShaderPath;
-        shader.fragmentShaderPath = shaderSnapshot.fragmentShaderPath;
-        shader.recompileAndRelink();
-
-        models.push_back(model);
     }
+    catch (const std::exception& e) {
+        std::cerr << "Error during loading: " << e.what() << std::endl;
+    }
+
+    inFile.close();
+    std::cout << "Finished loading game state from file" << std::endl;
 }
+
 
 int main()
 {

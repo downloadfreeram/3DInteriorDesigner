@@ -221,7 +221,9 @@ struct ModelSnapshot {
     private:
         glm::vec3 deserializeVec3(std::istream& is) {
             glm::vec3 vec;
-            is.read(reinterpret_cast<char*>(&vec), sizeof(glm::vec3));
+            is.read(reinterpret_cast<char*>(&vec.x), sizeof(float));
+            is.read(reinterpret_cast<char*>(&vec.y), sizeof(float));
+            is.read(reinterpret_cast<char*>(&vec.z), sizeof(float));
             return vec;
         }
         std::string deserializeString(std::istream& is) {
