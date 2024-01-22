@@ -17,7 +17,9 @@
 #include <iostream>
 #include <chrono>
 #define NOMINMAX
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include <commdlg.h>  
 
 
@@ -221,6 +223,7 @@ void SecondaryWindow() {
 
     ImGui::End();
 }
+// load and store textures for icons
 GLuint LoadTexture(const char* filename) {
     GLuint textureID;
     glGenTextures(1, &textureID);
@@ -429,12 +432,31 @@ void saveGameState(const std::string& filepath, const std::vector<Model>& models
         ModelSnapshot snapshot(model);
         snapshot.serialize(outFile);
     }
-}
 
-void loadGameState(const std::string& filepath, std::vector<Model>& models, Shader& shader, std::string& selectedRoomModel) {
-    std::ifstream inFile(filepath, std::ios::binary);
+    // Close the file before changing permissions
+    outFile.close();
+
+#ifdef _WIN32
+    // Change file attributes to make it writable on Windows
+    if (!SetFileAttributes(filepath.c_str(), FILE_ATTRIBUTE_NORMAL)) {
+        throw std::runtime_error("Failed to change file attributes");
+    }
+#endif
 
     std::cout << filepath << std::endl;
+    std::cout << "Scene has been successfully saved to " << filepath << std::endl;
+}
+
+
+void loadGameState(const std::string& filepath, std::vector<Model>& models, Shader& shader, std::string& selectedRoomModel) {
+    std::cout << "Attempting to load from file: " << filepath << std::endl;
+    std::ifstream inFile(filepath, std::ios::binary);
+
+
+    if (!inFile) {
+        perror("Error opening file");
+        throw std::runtime_error("Failed to open file for loading");
+    }
 
     models.clear(); // Clear existing models
 
