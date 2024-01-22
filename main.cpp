@@ -66,7 +66,7 @@ std::string OpenFileDialog() {
     // use the contents of szFile to initialize itself.
     ofn.lpstrFile[0] = '\0';
     ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
+    ofn.lpstrFilter = "BIN Files (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
     ofn.nFilterIndex = 1;
     ofn.lpstrFileTitle = NULL;
     ofn.nMaxFileTitle = 0;
@@ -98,7 +98,7 @@ std::string SaveFileDialog() {
     ofn.lpstrFile = szFile;
     ofn.lpstrFile[0] = '\0';
     ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = "All\0*.*\0Text\0*.TXT\0";
+    ofn.lpstrFilter = "BIN Files (*.bin)\0*.bin\0All Files (*.*)\0*.*\0";
     ofn.nFilterIndex = 1;
     ofn.lpstrFileTitle = NULL;
     ofn.nMaxFileTitle = 0;
@@ -106,6 +106,10 @@ std::string SaveFileDialog() {
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 
     if (GetSaveFileName(&ofn) == TRUE) {
+        std::string filepath = ofn.lpstrFile;
+        if (filepath.find_last_of(".") == std::string::npos) {
+            filepath += ".bin";
+        }
         hf = CreateFile(ofn.lpstrFile,
             GENERIC_WRITE,
             0,
@@ -113,7 +117,7 @@ std::string SaveFileDialog() {
             CREATE_NEW,
             FILE_ATTRIBUTE_NORMAL,
             (HANDLE)NULL);
-        return ofn.lpstrFile;
+        return filepath;
     }
     return "";
 }
@@ -405,14 +409,15 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
         std::string filepath = SaveFileDialog();
         if (!filepath.empty()) {
             saveGameState(filepath, models);
+            std::cout << filepath << std::endl;
             std::cout << "Scene has been successfully saved to " << filepath << std::endl;
         }
     }
 
     ImGui::End();
 }
-void saveGameState(const std::string& filename, const std::vector<Model>& models) {
-    std::ofstream outFile(filename, std::ios::binary);
+void saveGameState(const std::string& filepath, const std::vector<Model>& models) {
+    std::ofstream outFile(filepath, std::ios::binary);
     if (!outFile) {
         throw std::runtime_error("Failed to open file for saving");
     }
@@ -424,11 +429,10 @@ void saveGameState(const std::string& filename, const std::vector<Model>& models
     }
 }
 
-void loadGameState(const std::string& filename, std::vector<Model>& models, Shader& shader) {
-    std::ifstream inFile(filename, std::ios::binary);
-    if (!inFile) {
-        throw std::runtime_error("Failed to open file for loading");
-    }
+void loadGameState(const std::string& filepath, std::vector<Model>& models, Shader& shader) {
+    std::ifstream inFile(filepath, std::ios::binary);
+
+    std::cout << filepath << std::endl;
 
     models.clear(); // Clear existing models
 
