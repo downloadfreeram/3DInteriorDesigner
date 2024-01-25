@@ -381,7 +381,7 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
     if (ImGui::BeginPopup("Generate")) 
     {
         if (ImGui::Button("Standard Chair")) {
-            GenerateObject("chair_normal.obj", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Standard Chair");
+            GenerateObject("chair1.glb", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Standard Chair");
         }
 
 
@@ -390,16 +390,6 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
         }
 
         ImGui::EndPopup();
-    }
-
-    // Batch rendering of all models
-    for (const Model& model : models) {
-        // Set transformations for specific object
-        glm::mat4 modelMatrix = model.GetTransformMatrix();
-        ourShader.setMat4("model", modelMatrix);
-
-        // Draw the model
-        model.Draw(ourShader);
     }
 
     bool ImGuiHandlingInput = ImGui::GetIO().WantCaptureMouse;
@@ -577,6 +567,15 @@ int main()
         if (showModelWindow) {
             initializeScene(ourShader,"texture_diffuse2.jpg",selectedRoomModel);
             RenderModelWindow(window, ourShader);
+            // Batch rendering of all models
+            for (const Model& model : models) {
+                // Set transformations for specific object
+                glm::mat4 modelMatrix = model.GetTransformMatrix();
+                ourShader.setMat4("model", modelMatrix);
+
+                // Draw the model
+                model.Draw(ourShader);
+            }
         }
 
         ImGui::Render();
