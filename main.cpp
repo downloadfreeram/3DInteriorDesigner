@@ -538,48 +538,74 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
+    const double targetFrameTime = 1.0 / 60.0; // 60 fps
+    double lastFrameTime = glfwGetTime();
+    double lastFPSUpdateTime = lastFrameTime; // Initialize lastFPSUpdateTime
+    int frameCount = 0;
 
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();  // Process GLFW events
 
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+        // Calculate elapsed time since the last frame
+        double currentFrameTime = glfwGetTime();
+        double deltaTime = currentFrameTime - lastFrameTime;
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        if (deltaTime >= targetFrameTime)
+        {
+            // Update last frame time
+            lastFrameTime = currentFrameTime;
 
-        if (showMainMenu) {
-            MainMenu();
-        }
+            frameCount++;
 
-        if (showSecondaryWindow) {
-            SecondaryWindow();
-        }
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
 
-        if (showChooseWindow) {
-            ChooseWindow();
-        }
-
-        if (showModelWindow) {
-            initializeScene(ourShader,"texture_diffuse2.jpg",selectedRoomModel);
-            RenderModelWindow(window, ourShader);
-            // Batch rendering of all models
-            for (const Model& model : models) {
-                // Set transformations for specific object
-                glm::mat4 modelMatrix = model.GetTransformMatrix();
-                ourShader.setMat4("model", modelMatrix);
-
-                // Draw the model
-                model.Draw(ourShader);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            if (showMainMenu) {
+                MainMenu();
             }
+
+            if (showSecondaryWindow) {
+                SecondaryWindow();
+            }
+
+            if (showChooseWindow) {
+                ChooseWindow();
+            }
+
+            if (showModelWindow) {
+                initializeScene(ourShader, "texture_diffuse2.jpg", selectedRoomModel);
+                RenderModelWindow(window, ourShader);
+
+                // Batch rendering of all models
+                for (const Model& model : models) {
+                    // Set transformations for specific object
+                    glm::mat4 modelMatrix = model.GetTransformMatrix();
+                    ourShader.setMat4("model", modelMatrix);
+
+                    // Draw the model
+                    model.Draw(ourShader);
+                }
+            }
+
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+            glfwSwapBuffers(window);
         }
+        // Calculate FPS every second
+        if (currentFrameTime - lastFPSUpdateTime >= 1.0)
+        {
+            double fps = frameCount / (currentFrameTime - lastFPSUpdateTime);
+            std::cout << "FPS: " << fps << std::endl;
 
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        glfwSwapBuffers(window);
+            // Reset frame count and update last FPS update time
+            frameCount = 0;
+            lastFPSUpdateTime = currentFrameTime;
+        }
     }
 
     // delete all resources

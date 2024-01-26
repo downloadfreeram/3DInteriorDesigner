@@ -1,11 +1,12 @@
 #include "Mesh.h"
-void Mesh::setVAO(unsigned int vao) const {
-    VAO = vao;
-}
 void Mesh::Draw(const Shader& shader) const
 {
-    VAOManager& vaoManager = VAOManager::getInstance();
-    unsigned int VAO = vaoManager.getVAO(*this);
+    
+    if (VAO == 0) {
+        std::cerr << "error:" << std::endl;
+        return;
+    }
+    shader.use();
     
     glBindVertexArray(VAO);
     // bind appropriate textures
@@ -40,11 +41,14 @@ void Mesh::Draw(const Shader& shader) const
 
     // set everything back to defaults once configured.
     glActiveTexture(GL_TEXTURE0);
+    glUseProgram(0);
 }
 
 // initializes all the buffer objects/arrays
 void Mesh::setupMesh()
 {
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
     // create buffers/arrays
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -81,4 +85,5 @@ void Mesh::setupMesh()
     // weights
     glEnableVertexAttribArray(6);
     glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
+    glBindVertexArray(0);
 }
