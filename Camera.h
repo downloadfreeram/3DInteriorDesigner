@@ -28,9 +28,9 @@ class Camera
 
         Camera(int width, int height,float zoom, glm::vec3 position);
 
-        // Updates and exports the camera matrix to the Vertex Shader
+        // updates and exports the camera matrix to the Vertex Shader
         void updateMatrix(float FOVdeg, float nearPlane, float farPlane);
-        // Handles camera inputs
+        // handles camera inputs
         void Inputs(GLFWwindow* window);
         void ProcessMouseScroll(float yoffset);
 

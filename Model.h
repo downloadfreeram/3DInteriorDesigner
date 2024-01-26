@@ -74,17 +74,17 @@ public:
             meshes[i].Draw(shader);  // Pass the provided shader to the Draw function of each mesh
     }
 
-    // Getter for position
+    // getter for position
     glm::vec3 getPosition() const {
         return position;
     }
 
-    // Getter for rotation
+    // getter for rotation
     glm::vec3 getRotation() const {
         return rotation;
     }
 
-    // Getter for scale
+    // getter for scale
     glm::vec3 getScale() const {
         return scale;
     }
@@ -95,17 +95,17 @@ public:
     const Shader& getShader() const {
         return shader;
     }
-    // Setter for position
+    // setter for position
     void setPosition(const glm::vec3& newPosition) {
         position = newPosition;
     }
 
-    // Setter for rotation
+    // setter for rotation
     void setRotation(const glm::vec3& newRotation) {
         rotation = newRotation;
     }
 
-    // Setter for scale
+    // setter for scale
     void setScale(const glm::vec3& newScale) {
         scale = newScale;
     }
