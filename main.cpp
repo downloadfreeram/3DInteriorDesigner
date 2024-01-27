@@ -140,7 +140,7 @@ std::string GenerateUniqueName(const std::string& defaultName) {
 // function to generate and render an object
 void GenerateObject(std::string name, const std::string& texName, Shader& ourShader, int id, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale,std::string menuName) {
     // load the model
-    Model ourModel(string("resources/objects/") + name, id, position, rotation, scale);
+    Model ourModel("resources/objects/" + name, id, position, rotation, scale);
     ourModel.objectName = menuName;
     ourModel.textureName = texName;
     models.push_back(ourModel);
@@ -171,7 +171,7 @@ void DeleteObject(std::string name,int id) {
 std::vector<std::string> roomModelNames = { "room.obj", "room1.obj" };
 std::string selectedRoomModel;
 
-void saveGameState(const std::string& filepath, const std::vector<Model>& models);
+void saveGameState(const std::string& filepath, const std::vector<Model>& models, const std::string& selectedRoomModel);
 void loadGameState(const std::string& filepath, std::vector<Model>& models, Shader& ourShader, string& selectedRoomModel);
 
 void DisplaySecondaryWindow() {
@@ -228,15 +228,13 @@ void MainMenu() {
         std::string filepath = OpenFileDialog();
         if (!filepath.empty()) {
             // Handle button click and loading scene
-            loadGameState(filepath, models, ourShader, selectedRoomModel);
+            loadGameState("C:/Users/Kacper/source/repos/3DInteriorDesigner/file.bin", models, ourShader, selectedRoomModel);
             DisplayModelWindow();
         }
     }
 
     ImGui::End();
 }
-
-
 
 void SecondaryWindow() {
     ImGuiIO& io = ImGui::GetIO();
@@ -345,7 +343,7 @@ void ChooseWindow() {
         showModelWindow = true;
         selectedRoomModel = roomModelNames[0];
     }
-    ImGui::SameLine();  // Move to the next item on the same line
+    ImGui::SameLine();  
 
     // Second button
     ImGui::SetCursorPosX(offsetX + buttonWidth + ImGui::GetStyle().ItemSpacing.x);
@@ -356,9 +354,8 @@ void ChooseWindow() {
         showModelWindow = true;
         selectedRoomModel = roomModelNames[1];
     }
-    ImGui::SameLine();  // Move to the next item on the same line
+    ImGui::SameLine();  
 
-    // Additional buttons can be added similarly
 
     ImGui::End();
 }
@@ -366,7 +363,7 @@ void ChooseWindow() {
 
 void initializeScene(Shader& ourShader,const char* texName,const std::string roomObj) {
     room = Model("resources/objects/" + roomObj,glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(1.0f,1.0f,1.0f));
-    TextureFromFile(texName, "resources/objects");
+    TextureFromFile(texName, "resources/objects/");
     ourShader.use();
 }
 void UpdateCamera(GLFWwindow* window, Camera& camera, bool ImGuiHandlingInput) {
@@ -443,7 +440,7 @@ void HandleInput(GLFWwindow* window, std::vector<Model>& models, Shader& outShad
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
         std::string filepath = SaveFileDialog();
         if (!filepath.empty()) {
-            saveGameState(filepath, models);
+            saveGameState(filepath, models,selectedRoomModel);
             std::cout << filepath << std::endl;
             std::cout << "Scene has been successfully saved to " << filepath << std::endl;
         }
@@ -472,16 +469,22 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader, std::vector<Model>
 
     ImGui::End();
 }
-void saveGameState(const std::string& filepath, const std::vector<Model>& models) {
+void saveGameState(const std::string& filepath, const std::vector<Model>& models, const std::string& selectedRoomModel) {
     std::ofstream outFile(filepath, std::ios::binary);
     if (!outFile) {
         throw std::runtime_error("Failed to open file for saving");
     }
 
+    // Serialize the selected room model
+    size_t roomModelLength = selectedRoomModel.length();
+    outFile.write(reinterpret_cast<const char*>(&roomModelLength), sizeof(roomModelLength));
+    outFile.write(selectedRoomModel.c_str(), roomModelLength);
+
     for (const auto& model : models) {
         std::cout << model.objectName << std::endl;
         ModelSnapshot snapshot(model);
         snapshot.serialize(outFile);
+        std::cout << snapshot.modelFilePath << std::endl;
     }
 
     // Close the file before changing permissions
@@ -496,6 +499,7 @@ void saveGameState(const std::string& filepath, const std::vector<Model>& models
 
     std::cout << filepath << std::endl;
     std::cout << "Scene has been successfully saved to " << filepath << std::endl;
+    
 }
 
 
@@ -509,13 +513,23 @@ void loadGameState(const std::string& filepath, std::vector<Model>& models, Shad
         throw std::runtime_error("Failed to open file for loading");
     }
 
+    // Deserialize the selected room model
+    size_t roomModelLength;
+    inFile.read(reinterpret_cast<char*>(&roomModelLength), sizeof(roomModelLength));
+    char* roomModelBuffer = new char[roomModelLength + 1];
+    inFile.read(roomModelBuffer, roomModelLength);
+    roomModelBuffer[roomModelLength] = '\0';
+    selectedRoomModel = std::string(roomModelBuffer);
+    delete[] roomModelBuffer;
+
     models.clear(); // Clear existing models
 
     while (inFile.peek() != EOF) {
         ModelSnapshot snapshot;
         snapshot.deserialize(inFile);
+        std::cout << "Deserialized model file path: " << snapshot.modelFilePath << std::endl;
 
-        Model model;
+        Model model(snapshot.modelFilePath, snapshot.position, snapshot.rotation, snapshot.scale);
         model.setPosition(snapshot.position);
         model.setRotation(snapshot.rotation);
         model.setScale(snapshot.scale);
@@ -524,9 +538,6 @@ void loadGameState(const std::string& filepath, std::vector<Model>& models, Shad
 
         if (!model.objectName.empty()) {
             modelNames.push_back(model.objectName);
-        }
-        else {
-            std::cerr << "WARNING: Loaded model with an empty name" << std::endl;
         }
 
         // Load model meshes
@@ -539,7 +550,7 @@ void loadGameState(const std::string& filepath, std::vector<Model>& models, Shad
         // Load model textures
         for (const auto& textureSnapshot : snapshot.textures) {
             Texture texture;
-            texture.id = TextureFromFile(textureSnapshot.path.c_str(), "resources/objects");
+            texture.id = TextureFromFile(textureSnapshot.path.c_str(), "resources/objects/");
             texture.type = textureSnapshot.type;
             texture.path = textureSnapshot.path;
             model.textures_loaded.push_back(texture);
@@ -554,8 +565,7 @@ void loadGameState(const std::string& filepath, std::vector<Model>& models, Shad
         models.push_back(model);
 
     }
-    selectedRoomModel = "room1.obj";
-    initializeScene(shader, "texture_diffuse2.jpg", selectedRoomModel);
+    initializeScene(shader, "resources/objects/texture_diffuse2.jpg", selectedRoomModel);
 }
 
 int main()
@@ -569,11 +579,11 @@ int main()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    // Query the primary monitor's video mode
+    // query the primary monitor's video mode
     GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
     const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
 
-    // Set the window size to match the monitor resolution
+    // set the window size to match the monitor resolution
     const int monitorWidth = mode->width;
     const int monitorHeight = mode->height;
 

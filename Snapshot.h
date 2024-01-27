@@ -130,6 +130,7 @@ struct ModelSnapshot {
     std::vector<MeshSnapshot> meshes;
     std::vector<Texture> textures;
     ShaderSnapshot shader;
+    std::string modelFilePath;
 
     // default constructor
     ModelSnapshot() = default;
@@ -137,12 +138,14 @@ struct ModelSnapshot {
     ModelSnapshot(const Model& model)
         : position(model.getPosition()),
         rotation(model.getRotation()),
-        scale(model.getScale()) {
+        scale(model.getScale()),
+        modelFilePath(model.getFilePath()) {
         for (const auto& mesh : model.meshes) {  
             meshes.push_back(MeshSnapshot(mesh));
         }
         textures = model.textures_loaded;
         shader = ShaderSnapshot(model.getShader());
+
     }
 
 
@@ -158,6 +161,10 @@ struct ModelSnapshot {
         os.write(reinterpret_cast<const char*>(&position), sizeof(position));
         os.write(reinterpret_cast<const char*>(&rotation), sizeof(rotation));
         os.write(reinterpret_cast<const char*>(&scale), sizeof(scale));
+
+        size_t modelFilePathLength = modelFilePath.length();
+        os.write(reinterpret_cast<const char*>(&modelFilePathLength), sizeof(modelFilePathLength));
+        os.write(modelFilePath.c_str(), modelFilePathLength);
 
         // Serialize object name
         size_t objectNameLength = objectName.length();
@@ -191,10 +198,13 @@ struct ModelSnapshot {
         position = deserializeVec3(is);
         rotation = deserializeVec3(is);
         scale = deserializeVec3(is);
+        // Deserialize the model file path
+        modelFilePath = deserializeString(is);
 
         objectName = deserializeString(is);
 
         textureName = deserializeString(is);
+
 
         // Deserialize meshes
         size_t numMeshes = deserializeSizeT(is);
@@ -214,7 +224,7 @@ struct ModelSnapshot {
         textures.resize(sizeTextures);
         for (auto& texture : textures) {
             texture.path = deserializeString(is);
-            texture.id = TextureFromFile(texture.path.c_str(), "resources/objects");
+            texture.id = TextureFromFile(texture.path.c_str(), "resources/objects/");
         }
         
     }
