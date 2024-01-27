@@ -329,12 +329,12 @@ void RenderGUI(int& selectedId, std::vector<Model>& models, std::vector<std::str
     }
     // options for every object generated
     if (selectedId >= 0 && selectedId < models.size()) {
+        // Sliders for changing position and rotation
         ImGui::SliderFloat("X Position", &models[selectedId].position.x, -20.0f, 20.0f);
         ImGui::SliderFloat("Y Position", &models[selectedId].position.y, -20.0f, 20.0f);
         ImGui::SliderFloat("Z Position", &models[selectedId].position.z, -20.0f, 20.0f);
-
-
         ImGui::SliderFloat("Rotation", &models[selectedId].rotation.y, 0.0f, 360.0f);
+
         if (ImGui::Button("Delete")) {
             DeleteObject(modelNames[selectedId], selectedId);
             // after deleting an object update the id, and check if the vector is empty
@@ -347,6 +347,7 @@ void RenderGUI(int& selectedId, std::vector<Model>& models, std::vector<std::str
         }
     }
 }
+
 void RenderModels(Shader& ourShader, const std::vector<Model>& models) {
     for (const Model& model : models) {
         glm::mat4 modelMatrix = model.GetTransformMatrix();
@@ -401,7 +402,7 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader, std::vector<Model>
             name = "none";
         }
     }
-
+    UpdateCamera(window, camera, ImGuiHandlingInput);
     RenderGUI(selectedId, models, modelNames);
     HandleInput(window, models, ourShader, selectedId);
     RenderModels(ourShader, models);
