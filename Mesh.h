@@ -7,7 +7,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "Shader.h"
-#include "VAOManager.h"
 
 #include <string>
 #include <vector>
@@ -57,9 +56,6 @@ public:
     // render the mesh
     void Draw(const Shader& shader) const
     {
-        VAOManager& vaoManager = VAOManager::getInstance();
-        unsigned int VAO = vaoManager.getVAO(*this);
-        glBindVertexArray(VAO);
         // bind appropriate textures
         unsigned int diffuseNr = 1;
         unsigned int specularNr = 1;
@@ -87,6 +83,7 @@ public:
         }
 
         // draw mesh
+        glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
@@ -141,74 +138,6 @@ private:
     // render data 
     unsigned int VBO, EBO;
 
-};
-class VAOManager {
-public:
-    // singleton
-    static VAOManager& getInstance() {
-        static VAOManager instance;
-        return instance;
-    }
-    unsigned int getVAO(const Mesh& mesh) {
-        std::string layoutKey = getLayoutKey(mesh);
-        auto it = vaoMap.find(layoutKey);
-
-        if (it != vaoMap.end()) {
-            //VAO already exists for this layout
-            return it->second;
-        } 
-        else {
-            // create a new VAO for this layout
-            unsigned int vao = createVAO(mesh);
-            vaoMap[layoutKey] = vao;
-            return vao;
-        }
-    }
-private:
-    VAOManager() {};
-    std::map<std::string, unsigned int> vaoMap;
-
-    //generaets a unique key based on the mesh vertes layout
-    std::string getLayoutKey(const Mesh& mesh) {
-        // for example generate a key based on vertes attributes
-        std::string key;
-        // append other attributes as necessary
-        key += "P:" + std::to_string(sizeof(mesh.vertices[0].Position));
-        key += "N:" + std::to_string(sizeof(mesh.vertices[0].Normal));
-        key += "T:" + std::to_string(sizeof(mesh.vertices[0].TexCoords));
-        return key;
-    }
-    unsigned int createVAO(const Mesh& mesh) {
-        unsigned int vao;
-        glGenVertexArrays(1, &vao);
-        glBindVertexArray(vao);
-
-        //bind and set vertex buffer and attribute pointer
-        unsigned int vbo;
-        glGenBuffers(1, &vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, mesh.vertices.size() * sizeof(Vertex), &mesh.vertices[0], GL_STATIC_DRAW);
-
-        //position attribute
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        //normal attribute
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,Normal));
-        glEnableVertexAttribArray(1);
-
-        //texture attribute
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
-        glEnableVertexAttribArray(2);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-
-        //clean up
-        glDeleteBuffers(1, &vbo);
-
-        return vao;
-    }
 };
 #endif
 
