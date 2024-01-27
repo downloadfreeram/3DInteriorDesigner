@@ -25,11 +25,11 @@
 
 
 // settings
-const unsigned int SCR_WIDTH = 1600;
-const unsigned int SCR_HEIGHT = 1200;
+const unsigned int CAM_WIDTH = 1920;
+const unsigned int CAM_HEIGHT = 1080;
 
 // camera
-Camera camera(SCR_WIDTH, SCR_HEIGHT, 45.0f, glm::vec3(0.0f, 0.0f, 2.0f));
+Camera camera(CAM_WIDTH, CAM_HEIGHT, 45.0f, glm::vec3(0.0f, 0.0f, 2.0f));
 
 // room
 Model room;
@@ -190,30 +190,69 @@ void DisplayChooseWindow() {
     showChooseWindow = true;
     showModelWindow = false;
 }
-
-
 void MainMenu() {
-    ImGui::Begin("Main Menu", &showMainMenu);
+    ImGuiIO& io = ImGui::GetIO();
 
-    if (ImGui::Button("About")) {
+    ImGui::SetNextWindowPos(ImVec2((io.DisplaySize.x - 600) * 0.5f, (io.DisplaySize.y - 100) * 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(600, 100));
+
+    ImGui::Begin("Main Menu", &showMainMenu, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+
+    // Make the "Interior Designer" text larger and horizontally centered
+    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize("Interior Designer").x) * 0.5f);
+    ImGui::Text("Interior Designer");
+
+    ImGui::Spacing();
+
+    float buttonWidth = 150.0f;
+    float buttonHeight = 60.0f;
+
+    // Calculate the horizontal offset to center the buttons
+    float offset = (ImGui::GetWindowWidth() - 3 * buttonWidth - 2 * ImGui::GetStyle().ItemSpacing.x) * 0.5f;
+
+    // Set the cursor position to the calculated offset
+    ImGui::SetCursorPosX(offset);
+
+    // Draw the buttons
+    if (ImGui::Button("About", ImVec2(buttonWidth, buttonHeight))) {
         DisplaySecondaryWindow();
     }
+    ImGui::SameLine();
 
-    if (ImGui::Button("Start")) {
+    if (ImGui::Button("Start", ImVec2(buttonWidth, buttonHeight))) {
         DisplayChooseWindow();
     }
-    if (ImGui::Button("Load Scene")) {
+    ImGui::SameLine();
+
+    if (ImGui::Button("Load Scene", ImVec2(buttonWidth, buttonHeight))) {
         std::string filepath = OpenFileDialog();
         if (!filepath.empty()) {
+            // Handle button click and loading scene
             loadGameState(filepath, models, ourShader, selectedRoomModel);
-            DisplayModelWindow(); 
+            DisplayModelWindow();
         }
     }
+
     ImGui::End();
 }
 
+
+
 void SecondaryWindow() {
-    ImGui::Begin("Secondary Window", &showSecondaryWindow);
+    ImGuiIO& io = ImGui::GetIO();
+
+    ImGui::SetNextWindowPos(ImVec2((io.DisplaySize.x - 750) * 0.5f, (io.DisplaySize.y - 150) * 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(750, 150));
+
+    ImGui::Begin("About", &showSecondaryWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+    ImGui::Text("A simple interior designer program that lets you place some objects around the scene. Main controls:");
+    ImGui::Separator();
+
+    ImGui::Text("WASD - Movement");
+    ImGui::Text("LMB + Mouse - Rotate the camera");
+    ImGui::Text("Q - Save the scene");
+    ImGui::Text("R - Open the Generate window");
+    ImGui::Separator();
 
     if (ImGui::Button("Back to Main Menu")) {
         showSecondaryWindow = false;
@@ -261,15 +300,26 @@ void LoadTextures() {
     texture4 = LoadTexture("resources/images/image4.png");
 }
 
-
 void ChooseWindow() {
-    ImGui::Begin("Choose a room", &showChooseWindow);
+    // Get the display size to calculate the center position
+    ImVec2 displaySize = ImGui::GetIO().DisplaySize;
+
+    // Calculate the center position for the window
+    ImVec2 windowSize(400, 200);
+    ImVec2 windowPos((displaySize.x - windowSize.x) * 0.5f, (displaySize.y - windowSize.y) * 0.5f);
+
+    ImGui::SetNextWindowPos(windowPos);
+    ImGui::SetNextWindowSize(windowSize);
+
+    ImGui::Begin("Choose a room", &showChooseWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
     ImGui::Text("Choose the room preset");
 
     // Number of buttons
     int numButtons = roomModelNames.size();
 
-    ImGui::Columns(numButtons, nullptr, false);
+    // Use the available width for the buttons
+    float buttonWidth = 100.0f;  // Set your desired button width
+
     ImTextureID imguiTextureIDs[] = {
         reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture1)),
         reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture2)),
@@ -277,28 +327,39 @@ void ChooseWindow() {
         reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture4))
     };
 
-    // check if there are enough textures for buttons
+    // Check if there are enough textures for buttons
     assert(numButtons <= sizeof(imguiTextureIDs) / sizeof(imguiTextureIDs[0]));
     ImVec2 imageSize(100, 100);
 
-    ImGui::SetColumnWidth(0, 200.0f);
+    // Calculate total width occupied by buttons
+    float totalButtonsWidth = numButtons * buttonWidth;
+
+    // Calculate the offset to center buttons within the window
+    float offsetX = (windowSize.x - totalButtonsWidth) * 0.5f;
+
+    ImGui::SetCursorPosX(offsetX);
     ImGui::Image(imguiTextureIDs[0], imageSize);
     if (ImGui::Button("Preset #1")) {
-        std::cout << "klik" << std::endl;
+        std::cout << "Clicked on Preset #1" << std::endl;
         showChooseWindow = false;
         showModelWindow = true;
         selectedRoomModel = roomModelNames[0];
     }
-    ImGui::SetColumnWidth(1, 200.0f);
+    ImGui::SameLine();  // Move to the next item on the same line
+
+    // Second button
+    ImGui::SetCursorPosX(offsetX + buttonWidth + ImGui::GetStyle().ItemSpacing.x);
     ImGui::Image(imguiTextureIDs[1], imageSize);
     if (ImGui::Button("Preset #2")) {
-        std::cout << "klik" << std::endl;
+        std::cout << "Clicked on Preset #2" << std::endl;
         showChooseWindow = false;
         showModelWindow = true;
         selectedRoomModel = roomModelNames[1];
     }
+    ImGui::SameLine();  // Move to the next item on the same line
 
-    ImGui::Columns(1);
+    // Additional buttons can be added similarly
+
     ImGui::End();
 }
 
@@ -508,7 +569,15 @@ int main()
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Interior Designer", NULL, NULL);
+    // Query the primary monitor's video mode
+    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+
+    // Set the window size to match the monitor resolution
+    const int monitorWidth = mode->width;
+    const int monitorHeight = mode->height;
+
+    GLFWwindow* window = glfwCreateWindow(monitorWidth, monitorHeight, "Interior Designer", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
