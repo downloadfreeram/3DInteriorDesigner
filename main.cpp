@@ -85,6 +85,14 @@ std::string OpenFileDialog() {
             OPEN_EXISTING,
             FILE_ATTRIBUTE_NORMAL,
             (HANDLE)NULL);
+
+        // Check if the handle is valid
+        if (hf == INVALID_HANDLE_VALUE) {
+            std::cerr << "Error opening file: " << ofn.lpstrFile << std::endl;
+            return "";
+        }
+        // Close the handle before returning
+        CloseHandle(hf);
         return ofn.lpstrFile;
     }
     return "";
@@ -228,7 +236,7 @@ void MainMenu() {
         std::string filepath = OpenFileDialog();
         if (!filepath.empty()) {
             // Handle button click and loading scene
-            loadGameState("C:/Users/Kacper/source/repos/3DInteriorDesigner/file.bin", models, ourShader, selectedRoomModel);
+            loadGameState(filepath, models, ourShader, selectedRoomModel);
             DisplayModelWindow();
         }
     }
@@ -363,7 +371,7 @@ void ChooseWindow() {
 
 void initializeScene(Shader& ourShader,const char* texName,const std::string roomObj) {
     room = Model("resources/objects/" + roomObj,glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(1.0f,1.0f,1.0f));
-    TextureFromFile(texName, "resources/objects/");
+    TextureFromFile(texName, "resources/objects");
     ourShader.use();
 }
 void UpdateCamera(GLFWwindow* window, Camera& camera, bool ImGuiHandlingInput) {
@@ -529,7 +537,7 @@ void loadGameState(const std::string& filepath, std::vector<Model>& models, Shad
         snapshot.deserialize(inFile);
         std::cout << "Deserialized model file path: " << snapshot.modelFilePath << std::endl;
 
-        Model model(snapshot.modelFilePath, snapshot.position, snapshot.rotation, snapshot.scale);
+        Model model("resources/objects/"+snapshot.objectName, snapshot.position, snapshot.rotation, snapshot.scale);
         model.setPosition(snapshot.position);
         model.setRotation(snapshot.rotation);
         model.setScale(snapshot.scale);
@@ -565,7 +573,7 @@ void loadGameState(const std::string& filepath, std::vector<Model>& models, Shad
         models.push_back(model);
 
     }
-    initializeScene(shader, "resources/objects/texture_diffuse2.jpg", selectedRoomModel);
+    initializeScene(shader, "texture_diffuse2.jpg", selectedRoomModel);
 }
 
 int main()

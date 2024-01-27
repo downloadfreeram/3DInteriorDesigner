@@ -34,7 +34,6 @@ public:
     std::string objectName;
     std::string textureName;
     std::string filePath;
-    std::string absoluteFilePath;
     string directory;
     int id;
     glm::vec3 position;
@@ -57,7 +56,7 @@ public:
         : position(glm::vec3(0.0f)),
         rotation(glm::vec3(0.0f)),
         scale(glm::vec3(1.0f)), 
-        filePath("") {
+        filePath("resources/objects/") {
     }
     //constructor for object
     Model(const std::string& modelPath, int id, const glm::vec3& pos, const glm::vec3& rot, const glm::vec3& scl)
@@ -74,7 +73,7 @@ public:
     void Draw(const Shader& shader) const
     {
         for (unsigned int i = 0; i < meshes.size(); i++)
-            meshes[i].Draw(shader);  // Pass the provided shader to the Draw function of each mesh
+            meshes[i].Draw(shader);  
     }
     //Getter for filepath
     std::string getFilePath() const {
