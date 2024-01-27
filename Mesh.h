@@ -53,8 +53,6 @@ public:
         // set the vertex buffers and its attribute pointers.
         setupMesh();
     }
-
-    void setVAO(unsigned int vao) const;
     void Draw(const Shader& shader) const;
     // initializes all the buffer objects/arrays
     void setupMesh();

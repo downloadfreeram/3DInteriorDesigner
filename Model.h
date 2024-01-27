@@ -56,9 +56,9 @@ public:
         rotation(glm::vec3(0.0f)),
         scale(glm::vec3(1.0f)) {
     }
-    // constructor for object
+    //constructor for object
     Model(const std::string& modelPath, int id, const glm::vec3& pos, const glm::vec3& rot, const glm::vec3& scl)
-        : id(id), position(pos), rotation(rot), scale(scl)  {
+        : id(id), position(pos), rotation(rot), scale(scl) {
         loadModel(modelPath);
     }
 

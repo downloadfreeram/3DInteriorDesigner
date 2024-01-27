@@ -36,6 +36,7 @@ Model room;
 
 Shader ourShader;
 
+
 //menu logic
 bool showMainMenu = true;
 bool showSecondaryWindow = false;
@@ -146,9 +147,7 @@ void GenerateObject(std::string name, const std::string& texName, Shader& ourSha
 
     std::string uniqueName = GenerateUniqueName(menuName); 
     modelNames.push_back(uniqueName);
-    
 
-    // load texture
     GLuint textureID = TextureFromFile(texName.c_str(), "resources/objects");
 
     // set the texture for the generated model
@@ -303,37 +302,17 @@ void ChooseWindow() {
 
 
 void initializeScene(Shader& ourShader,const char* texName,const std::string roomObj) {
-    room = Model("resources/objects/"+roomObj, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+    room = Model("resources/objects/" + roomObj,glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(1.0f,1.0f,1.0f));
     TextureFromFile(texName, "resources/objects");
     ourShader.use();
 }
-
-void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
-    //enable shader 
-    ourShader.use();
-    ourShader.setMat4("camMatrix", camera.cameraMatrix);
-
-    ourShader.setMat4("model", room.GetTransformMatrix());
-    room.Draw(ourShader);
-
-    ImGuiHandlingInput = ImGui::GetIO().WantCaptureMouse;
-
-    // process camera inputs only if ImGui is not handling input
+void UpdateCamera(GLFWwindow* window, Camera& camera, bool ImGuiHandlingInput) {
     if (!ImGuiHandlingInput) {
         camera.updateMatrix(camera.zoom, 0.1f, 100.0f);
         camera.Inputs(window);
     }
-
-
-
-    ImGui::Begin("Viewport", &showModelWindow);
-
-    for (auto& name : modelNames) {
-        if (name.empty()) {
-            std::cerr << "ERROR: empty model name!" << std::endl;
-            name = "none";
-        }
-    }
+}
+void RenderGUI(int& selectedId, std::vector<Model>& models, std::vector<std::string>& modelNames) {
     // dropdown menu for every object
     const char* combo_preview = selectedId >= 0 ? modelNames[selectedId].c_str() : "Select a model";
     if (ImGui::BeginCombo("Model", combo_preview)) {
@@ -348,7 +327,6 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
         }
         ImGui::EndCombo();
     }
-
     // options for every object generated
     if (selectedId >= 0 && selectedId < models.size()) {
         ImGui::SliderFloat("X Position", &models[selectedId].position.x, -20.0f, 20.0f);
@@ -361,41 +339,41 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
             DeleteObject(modelNames[selectedId], selectedId);
             // after deleting an object update the id, and check if the vector is empty
             if (models.empty()) {
-                selectedId = -1; 
+                selectedId = -1;
             }
             else {
-                selectedId = std::min(selectedId, static_cast<int>(models.size()) - 1); 
+                selectedId = std::min(selectedId, static_cast<int>(models.size()) - 1);
             }
         }
     }
+}
+void RenderModels(Shader& ourShader, const std::vector<Model>& models) {
+    for (const Model& model : models) {
+        glm::mat4 modelMatrix = model.GetTransformMatrix();
+        ourShader.setMat4("model", modelMatrix);
+        model.Draw(ourShader);
+    }
+}
 
-
+void HandleInput(GLFWwindow* window, std::vector<Model>& models, Shader& outShader,int& selectedId) {
     // after clicking the R button show the list of objects to generate
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) 
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
     {
         ImGui::OpenPopup("Generate");
-    } 
+    }
 
-    if (ImGui::BeginPopup("Generate")) 
+    if (ImGui::BeginPopup("Generate"))
     {
         if (ImGui::Button("Standard Chair")) {
-            GenerateObject("chair1.glb", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Standard Chair");
+            GenerateObject("chair1.glb", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1), "Standard Chair");
         }
 
 
         if (ImGui::Button("Dresser")) {
-            GenerateObject("dresser.obj", "texture_diffuse3.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1),"Dresser");
+            GenerateObject("dresser.obj", "texture_diffuse3.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1), "Dresser");
         }
 
         ImGui::EndPopup();
-    }
-
-    bool ImGuiHandlingInput = ImGui::GetIO().WantCaptureMouse;
-
-    // process camera inputs only if ImGui is not handling input
-    if (!ImGuiHandlingInput) {
-        camera.updateMatrix(camera.zoom, 0.1f, 100.0f);
-        camera.Inputs(window);
     }
     // Handle 'Q' key for Save
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
@@ -406,6 +384,27 @@ void RenderModelWindow(GLFWwindow* window, Shader& ourShader) {
             std::cout << "Scene has been successfully saved to " << filepath << std::endl;
         }
     }
+}
+void RenderModelWindow(GLFWwindow* window, Shader& ourShader, std::vector<Model>& models, int& selectedId) {
+    ourShader.use();
+    ourShader.setMat4("camMatrix", camera.cameraMatrix);
+
+    ourShader.setMat4("model", room.GetTransformMatrix());
+    room.Draw(ourShader);
+
+    ImGuiHandlingInput = ImGui::GetIO().WantCaptureMouse;
+    ImGui::Begin("Viewport", &showModelWindow);
+
+    for (auto& name : modelNames) {
+        if (name.empty()) {
+            std::cerr << "ERROR: empty model name!" << std::endl;
+            name = "none";
+        }
+    }
+
+    RenderGUI(selectedId, models, modelNames);
+    HandleInput(window, models, ourShader, selectedId);
+    RenderModels(ourShader, models);
 
     ImGui::End();
 }
@@ -578,17 +577,7 @@ int main()
 
             if (showModelWindow) {
                 initializeScene(ourShader, "texture_diffuse2.jpg", selectedRoomModel);
-                RenderModelWindow(window, ourShader);
-
-                // Batch rendering of all models
-                for (const Model& model : models) {
-                    // Set transformations for specific object
-                    glm::mat4 modelMatrix = model.GetTransformMatrix();
-                    ourShader.setMat4("model", modelMatrix);
-
-                    // Draw the model
-                    model.Draw(ourShader);
-                }
+                RenderModelWindow(window, ourShader, models,selectedId);
             }
 
             ImGui::Render();
