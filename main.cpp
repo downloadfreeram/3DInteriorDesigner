@@ -284,6 +284,7 @@ void ChooseWindow() {
     ImGui::SetColumnWidth(0, 200.0f);
     ImGui::Image(imguiTextureIDs[0], imageSize);
     if (ImGui::Button("Preset #1")) {
+        std::cout << "klik" << std::endl;
         showChooseWindow = false;
         showModelWindow = true;
         selectedRoomModel = roomModelNames[0];
@@ -291,6 +292,7 @@ void ChooseWindow() {
     ImGui::SetColumnWidth(1, 200.0f);
     ImGui::Image(imguiTextureIDs[1], imageSize);
     if (ImGui::Button("Preset #2")) {
+        std::cout << "klik" << std::endl;
         showChooseWindow = false;
         showModelWindow = true;
         selectedRoomModel = roomModelNames[1];
