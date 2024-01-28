@@ -150,8 +150,7 @@ void GenerateObject(std::string name, const std::string& texName, Shader& ourSha
     // load the model
     Model ourModel("resources/objects/" + name, id, position, rotation, scale);
     ourModel.objectName = menuName;
-    ourModel.textureName = texName;
-    models.push_back(ourModel);
+    //ourModel.textureName = texName;
 
     std::string uniqueName = GenerateUniqueName(menuName); 
     modelNames.push_back(uniqueName);
@@ -165,9 +164,9 @@ void GenerateObject(std::string name, const std::string& texName, Shader& ourSha
     texture.type = "texture_diffuse"; 
     texture.path = texName;
     ourModel.textures_loaded.push_back(texture);
-
-    // draw the model
-    ourModel.Draw(ourShader);
+    
+    std::cout << "Texture ID for model " << menuName << ": " << textureID << std::endl;
+    models.push_back(ourModel);
 }
 
 // function to delete a specific object
@@ -176,7 +175,7 @@ void DeleteObject(std::string name,int id) {
     modelNames.erase(modelNames.begin() + id);
 }
 // vector to determine which room to load
-std::vector<std::string> roomModelNames = { "room.obj", "room1.obj" };
+std::vector<std::string> roomModelNames = { "room.fbx", "room1.fbx" };
 std::string selectedRoomModel;
 
 void saveGameState(const std::string& filepath, const std::vector<Model>& models, const std::string& selectedRoomModel);
@@ -373,6 +372,7 @@ void initializeScene(Shader& ourShader,const char* texName,const std::string roo
     room = Model("resources/objects/" + roomObj,glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(1.0f,1.0f,1.0f));
     TextureFromFile(texName, "resources/objects");
     ourShader.use();
+    glActiveTexture(GL_TEXTURE0);
 }
 void UpdateCamera(GLFWwindow* window, Camera& camera, bool ImGuiHandlingInput) {
     if (!ImGuiHandlingInput) {
@@ -398,9 +398,9 @@ void RenderGUI(int& selectedId, std::vector<Model>& models, std::vector<std::str
     // options for every object generated
     if (selectedId >= 0 && selectedId < models.size()) {
         // Sliders for changing position and rotation
-        ImGui::SliderFloat("X Position", &models[selectedId].position.x, -20.0f, 20.0f);
-        ImGui::SliderFloat("Y Position", &models[selectedId].position.y, -20.0f, 20.0f);
-        ImGui::SliderFloat("Z Position", &models[selectedId].position.z, -20.0f, 20.0f);
+        ImGui::SliderFloat("X Position", &models[selectedId].position.x, -30.0f, 30.0f);
+        ImGui::SliderFloat("Y Position", &models[selectedId].position.y, -30.0f, 30.0f);
+        ImGui::SliderFloat("Z Position", &models[selectedId].position.z, -30.0f, 30.0f);
         ImGui::SliderFloat("Rotation", &models[selectedId].rotation.y, 0.0f, 360.0f);
 
         if (ImGui::Button("Delete")) {
@@ -418,6 +418,12 @@ void RenderGUI(int& selectedId, std::vector<Model>& models, std::vector<std::str
 
 void RenderModels(Shader& ourShader, const std::vector<Model>& models) {
     for (const Model& model : models) {
+        if (!model.textures_loaded.empty()) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, model.textures_loaded[0].id);
+            ourShader.setInt("texture_diffuse", 0);
+
+        }
         glm::mat4 modelMatrix = model.GetTransformMatrix();
         ourShader.setMat4("model", modelMatrix);
         model.Draw(ourShader);
@@ -434,12 +440,26 @@ void HandleInput(GLFWwindow* window, std::vector<Model>& models, Shader& outShad
     if (ImGui::BeginPopup("Generate"))
     {
         if (ImGui::Button("Standard Chair")) {
-            GenerateObject("chair1.glb", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1), "Standard Chair");
+            GenerateObject("chair1.fbx", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1), "Standard Chair");
         }
 
 
         if (ImGui::Button("Dresser")) {
-            GenerateObject("dresser.obj", "texture_diffuse3.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1), "Dresser");
+            GenerateObject("dresser.fbx", "texture_diffuse3.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.5), "Dresser");
+        }
+
+        if (ImGui::Button("Table")) {
+            GenerateObject("table1.fbx", "texture_diffuse4.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.5), "Table");
+        }
+
+        if (ImGui::Button("Dresser2")) {
+            GenerateObject("dresser2.fbx", "texture_diffuse5.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.5), "Dresser2");
+        }
+        if (ImGui::Button("Desk")) {
+            GenerateObject("desk.fbx", "texture_diffuse6.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.5), "Desk");
+        }
+        if (ImGui::Button("Table2")) {
+            GenerateObject("table2.fbx", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.), "Table2");
         }
 
         ImGui::EndPopup();
@@ -492,7 +512,6 @@ void saveGameState(const std::string& filepath, const std::vector<Model>& models
         std::cout << model.objectName << std::endl;
         ModelSnapshot snapshot(model);
         snapshot.serialize(outFile);
-        std::cout << snapshot.modelFilePath << std::endl;
     }
 
     // Close the file before changing permissions
@@ -535,7 +554,6 @@ void loadGameState(const std::string& filepath, std::vector<Model>& models, Shad
     while (inFile.peek() != EOF) {
         ModelSnapshot snapshot;
         snapshot.deserialize(inFile);
-        std::cout << "Deserialized model file path: " << snapshot.modelFilePath << std::endl;
 
         Model model("resources/objects/"+snapshot.objectName, snapshot.position, snapshot.rotation, snapshot.scale);
         model.setPosition(snapshot.position);
