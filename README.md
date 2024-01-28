@@ -18,8 +18,9 @@ Program tworzony był od podstaw w Visual Studio 2022 oraz wykorzsytuje bibliote
 5. Po pobraniu repozytorium budujemy rozwiązanie (CTRL + SHIFT + B)
 6. Po zakończeniu możemy uruchomić program w trybie Debug klawiszem F5
 # Instalacja aplikacji dla użytkownika
-1. Ściągamy repozytorium za pomocą git (git clone https://github.com/downloadfreeram/3DInteriorDesigner.git) lub poprzez github: https://github.com/downloadfreeram/3DInteriorDesigner/
-2. Wchodzimy w folder główny i uruchamiamy plik wykonywalny 3DInteriorDesigner.exe
+1. Pobieramy pakiet Microsoft Visual C++ Redistributable 2015-2022
+2. Ściągamy repozytorium za pomocą git (git clone https://github.com/downloadfreeram/3DInteriorDesigner.git) lub poprzez github: https://github.com/downloadfreeram/3DInteriorDesigner/
+3. Wchodzimy w folder główny i uruchamiamy plik wykonywalny 3DInteriorDesigner.exe
 # Sterowanie
 WASD - poruszanie się kamerą
 LMB + Mysz - obracanie kamerą
