@@ -9,7 +9,7 @@ Program tworzony był od podstaw w Visual Studio 2022 oraz wykorzsytuje bibliote
 5. Po pobraniu repozytorium budujemy rozwiązanie (CTRL + SHIFT + B)
 6. Po zakończeniu możemy uruchomić program w trybie Debug klawiszem F5
 # Instalacja aplikacji dla użytkownika
-1. Ściągamy repozytorium za pomocą git lub poprzez github: https://github.com/downloadfreeram/3DInteriorDesigner/edit/master/README.md
+1. Ściągamy repozytorium za pomocą git lub poprzez github: https://github.com/downloadfreeram/3DInteriorDesigner/
 2. Wchodzimy w folder główny i uruchamiamy 3DInteriorDesigner.exe
 # WAŻNE
 Program posiada funkcje zapisu i odczytu pliku. Jest to plik binarny o rozszerzeniu .bin, który należy umiesczać bezpośrednio w folderze aplikacji. Umieszczony plik gdziekolwiek indziej, nie będzie w stanie poprawnie się wczytać
