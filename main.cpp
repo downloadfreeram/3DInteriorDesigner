@@ -301,72 +301,71 @@ GLuint texture1, texture2, texture3, texture4;
 void LoadTextures() {
     texture1 = LoadTexture("resources/images/image1.png");
     texture2 = LoadTexture("resources/images/image2.png");
-    texture3 = LoadTexture("resources/images/image3.png");
-    texture4 = LoadTexture("resources/images/image4.png");
 }
-
 void ChooseWindow() {
     // Get the display size to calculate the center position
     ImVec2 displaySize = ImGui::GetIO().DisplaySize;
 
     // Calculate the center position for the window
-    ImVec2 windowSize(400, 200);
+    ImVec2 windowSize(500, 300);
     ImVec2 windowPos((displaySize.x - windowSize.x) * 0.5f, (displaySize.y - windowSize.y) * 0.5f);
 
     ImGui::SetNextWindowPos(windowPos);
     ImGui::SetNextWindowSize(windowSize);
 
-    ImGui::Begin("Choose a room", &showChooseWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
-    ImGui::Text("Choose the room preset");
+    ImGui::Begin("Choose a Room Preset", &showChooseWindow, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
+
+    ImGui::Text("Select a Room Preset:");
+
+    // Add some spacing
+    ImGui::Spacing();
 
     // Number of buttons
     int numButtons = roomModelNames.size();
 
     // Use the available width for the buttons
-    float buttonWidth = 100.0f;  // Set your desired button width
+    float buttonWidth = 150.0f;  // Adjusted button width
 
     ImTextureID imguiTextureIDs[] = {
         reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture1)),
-        reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture2)),
-        reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture3)),
-        reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture4))
+        reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture2))
     };
 
     // Check if there are enough textures for buttons
     assert(numButtons <= sizeof(imguiTextureIDs) / sizeof(imguiTextureIDs[0]));
-    ImVec2 imageSize(100, 100);
-
-    // Calculate total width occupied by buttons
-    float totalButtonsWidth = numButtons * buttonWidth;
+    ImVec2 imageSize(120, 120);  // Adjusted image size
 
     // Calculate the offset to center buttons within the window
-    float offsetX = (windowSize.x - totalButtonsWidth) * 0.5f;
+    float offsetX = (windowSize.x - buttonWidth) * 0.5f;
 
+    // Set initial cursor position for the first button
     ImGui::SetCursorPosX(offsetX);
-    ImGui::Image(imguiTextureIDs[0], imageSize);
-    if (ImGui::Button("Preset #1")) {
+
+    // First preset
+    if (ImGui::Button("Preset #1", ImVec2(buttonWidth, imageSize.y + 10))) {
         std::cout << "Clicked on Preset #1" << std::endl;
         showChooseWindow = false;
         showModelWindow = true;
         selectedRoomModel = roomModelNames[0];
     }
-    ImGui::SameLine();  
 
-    // Second button
-    ImGui::SetCursorPosX(offsetX + buttonWidth + ImGui::GetStyle().ItemSpacing.x);
-    ImGui::Image(imguiTextureIDs[1], imageSize);
-    if (ImGui::Button("Preset #2")) {
+    // Calculate offset for the second button
+    float offsetSecondButton = (windowSize.x - buttonWidth) * 0.5f;
+
+    // Set cursor position for the second button
+    ImGui::SetCursorPosX(offsetSecondButton);
+
+    // Second preset
+    if (ImGui::Button("Preset #2", ImVec2(buttonWidth, imageSize.y + 10))) {
         std::cout << "Clicked on Preset #2" << std::endl;
         showChooseWindow = false;
         showModelWindow = true;
         selectedRoomModel = roomModelNames[1];
     }
-    ImGui::SameLine();  
 
 
     ImGui::End();
 }
-
 
 void initializeScene(Shader& ourShader,const char* texName,const std::string roomObj) {
     room = Model("resources/objects/" + roomObj,glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,0.0f,0.0f),glm::vec3(1.0f,1.0f,1.0f));
@@ -401,7 +400,9 @@ void RenderGUI(int& selectedId, std::vector<Model>& models, std::vector<std::str
         ImGui::SliderFloat("X Position", &models[selectedId].position.x, -30.0f, 30.0f);
         ImGui::SliderFloat("Y Position", &models[selectedId].position.y, -30.0f, 30.0f);
         ImGui::SliderFloat("Z Position", &models[selectedId].position.z, -30.0f, 30.0f);
-        ImGui::SliderFloat("Rotation", &models[selectedId].rotation.y, 0.0f, 360.0f);
+        ImGui::SliderFloat("Rotation Y", &models[selectedId].rotation.y, -180.0f, 180.0f);
+        ImGui::SliderFloat("Rotation X", &models[selectedId].rotation.x, -180.0f, 180.0f);
+        ImGui::SliderFloat("Rotation Z", &models[selectedId].rotation.z, -180.0f, 180.0f);
 
         if (ImGui::Button("Delete")) {
             DeleteObject(modelNames[selectedId], selectedId);
@@ -439,10 +440,9 @@ void HandleInput(GLFWwindow* window, std::vector<Model>& models, Shader& outShad
 
     if (ImGui::BeginPopup("Generate"))
     {
-        if (ImGui::Button("Standard Chair")) {
-            GenerateObject("chair1.fbx", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(1), "Standard Chair");
+        if (ImGui::Button("Chair1")) {
+            GenerateObject("chair1.fbx", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.8), "Chair1");
         }
-
 
         if (ImGui::Button("Dresser")) {
             GenerateObject("dresser.fbx", "texture_diffuse3.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.5), "Dresser");
@@ -453,14 +453,24 @@ void HandleInput(GLFWwindow* window, std::vector<Model>& models, Shader& outShad
         }
 
         if (ImGui::Button("Dresser2")) {
-            GenerateObject("dresser2.fbx", "texture_diffuse5.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.5), "Dresser2");
+            GenerateObject("dresser2.fbx", "texture_diffuse5.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.7), "Dresser2");
         }
         if (ImGui::Button("Desk")) {
-            GenerateObject("desk.fbx", "texture_diffuse6.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.5), "Desk");
+            GenerateObject("desk.fbx", "texture_diffuse6.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.4), "Desk");
         }
         if (ImGui::Button("Table2")) {
-            GenerateObject("table2.fbx", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.), "Table2");
+            GenerateObject("table2.fbx", "texture_diffuse1.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.1), "Table2");
         }
+        if (ImGui::Button("Couch1")) {
+            GenerateObject("couch1.fbx", "texture_diffuse7.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 45.0f), glm::vec3(0.3), "couch1");
+        }
+        if (ImGui::Button("Couch2")) {
+            GenerateObject("couch2.fbx", "texture_diffuse7.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 45.0f), glm::vec3(0.3), "couch2");
+        }
+        if (ImGui::Button("Chair2")) {
+            GenerateObject("chair2.fbx", "texture_diffuse8.jpg", ourShader, models.size(), posXYZ, glm::vec3(0.0f, glm::radians(rot), 0.0f), glm::vec3(0.4), "Chair2");
+        }
+
 
         ImGui::EndPopup();
     }
@@ -523,9 +533,6 @@ void saveGameState(const std::string& filepath, const std::vector<Model>& models
         throw std::runtime_error("Failed to change file attributes");
     }
 #endif
-
-    std::cout << filepath << std::endl;
-    std::cout << "Scene has been successfully saved to " << filepath << std::endl;
     
 }
 
@@ -533,12 +540,6 @@ void saveGameState(const std::string& filepath, const std::vector<Model>& models
 void loadGameState(const std::string& filepath, std::vector<Model>& models, Shader& shader, std::string& selectedRoomModel) {
     std::cout << "Attempting to load from file: " << filepath << std::endl;
     std::ifstream inFile(filepath, std::ios::binary);
-
-
-    if (!inFile) {
-        perror("Error opening file");
-        throw std::runtime_error("Failed to open file for loading");
-    }
 
     // Deserialize the selected room model
     size_t roomModelLength;
