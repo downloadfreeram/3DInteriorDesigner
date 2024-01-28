@@ -477,6 +477,7 @@
     <None Include="assimp-vc143-mtd.dll" />
     <None Include="default.frag" />
     <None Include="default.vert" />
+    <None Include="InteriorDesigner.exe" />
     <None Include="Libraries\include\glm\detail\func_common.inl" />
     <None Include="Libraries\include\glm\detail\func_common_simd.inl" />
     <None Include="Libraries\include\glm\detail\func_exponential.inl" />

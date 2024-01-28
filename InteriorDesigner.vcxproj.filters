@@ -977,6 +977,9 @@
     <ClInclude Include="VAOManager.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="ResourceManager.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Libraries\include\glm\detail\func_common.inl">
@@ -1390,6 +1393,7 @@
     <None Include="assimp-vc143-mtd.dll" />
     <None Include="default.vert" />
     <None Include="default.frag" />
+    <None Include="InteriorDesigner.exe" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="Libraries\lib\assimp-vc143-mtd.lib" />
