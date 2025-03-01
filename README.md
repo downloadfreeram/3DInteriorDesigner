@@ -1,3 +1,9 @@
+# TODO
+- na ten moment aplikacja nie zadziala ze wzgledu na brak dostarczonych modeli(ograniczenie GitHuba modele za dużo ważyły)
+- optymalizacja aplikacji
+- zmiana struktury
+- "wyczyszczenie" kodu
+- zmiana sposobu generowania modeli
 # InteriorDesigner
 Prosty program do umieszczania obiektów w scenerii, wykorzystujący język c++ razem z OpenGL
 # Krótki opis aplikacji
